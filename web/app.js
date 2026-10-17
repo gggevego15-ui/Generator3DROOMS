@@ -46,6 +46,8 @@
   const PAGE_SIZE = 48;
   let visibleCount = PAGE_SIZE;
   let activeCategory = "All";
+  let freeModels = [];
+  let freeModelsStatus = "loading";
   let selected = null;
   let zoom = 100;
   let shadows = true;
@@ -81,27 +83,69 @@
     const toast = $("toast"); toast.textContent = message; toast.classList.add("visible");
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("visible"), 2300);
   }
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
   function renderCatalog() {
     const query = $("searchInput").value.trim().toLowerCase();
-    const filtered = categories.filter(item => (activeCategory === "All" || item.category === activeCategory) && item.name.toLowerCase().includes(query));
+    const source = activeCategory === "Free 3D" ? freeModels : categories;
+    const filtered = source.filter(item => (activeCategory === "All" || activeCategory === "Free 3D" || item.category === activeCategory) && (item.name + " " + (item.tags || []).join(" ")).toLowerCase().includes(query));
     const visible = filtered.slice(0, visibleCount);
-    $("objectGrid").innerHTML = visible.map(item => `
-      <button class="object-card ${selected?.name === item.name ? "selected" : ""}" data-object="${item.name}">
-        <span class="object-thumb"><svg viewBox="0 0 100 100" aria-hidden="true">${(shapes[item.kind] || shapes.cabinet)}</svg></span>
-        <span class="object-name">${item.name}</span>
-        <span class="object-meta"><span>${item.category}</span><span class="free">${item.price}</span></span>
-      </button>`).join("");
-    $("resultCount").textContent = `${filtered.length.toLocaleString()} procedural objects · showing ${visible.length.toLocaleString()}`;
+    $("objectGrid").innerHTML = visible.map(item => {
+      const thumb = item.isExternal && item.thumb
+        ? `<img src="${escapeHtml(item.thumb)}" alt="" loading="lazy" decoding="async">`
+        : `<svg viewBox="0 0 100 100" aria-hidden="true">${(shapes[item.kind] || shapes.cabinet)}</svg>`;
+      const meta = item.isExternal ? "CC0 · GLB" : item.category;
+      return `<button class="object-card ${selected?.name === item.name ? "selected" : ""}" data-object="${escapeHtml(item.id || item.name)}">
+        <span class="object-thumb">${thumb}</span>
+        <span class="object-name">${escapeHtml(item.name)}</span>
+        <span class="object-meta"><span>${escapeHtml(meta)}</span><span class="free">${item.isExternal ? "Free" : item.price}</span></span>
+      </button>`;
+    }).join("");
+    if (activeCategory === "Free 3D" && freeModelsStatus === "loading") $("resultCount").textContent = "Loading free CC0 furniture models…";
+    else if (activeCategory === "Free 3D" && freeModelsStatus === "error") $("resultCount").textContent = "Model library unavailable — check your internet connection";
+    else if (activeCategory === "Free 3D") $("resultCount").textContent = `${filtered.length} free CC0 GLB models · select one to add it to the room`;
+    else $("resultCount").textContent = `${filtered.length.toLocaleString()} procedural objects · showing ${visible.length.toLocaleString()}`;
     const moreButton = $("loadMoreObjects");
     moreButton.hidden = visible.length >= filtered.length;
     moreButton.textContent = `Load more (${Math.min(PAGE_SIZE, filtered.length - visible.length)} of ${filtered.length - visible.length} remaining)`;
     $("objectGrid").querySelectorAll("[data-object]").forEach(button => button.addEventListener("click", () => {
-      selected = categories.find(item => item.name === button.dataset.object);
+      selected = source.find(item => String(item.id || item.name) === button.dataset.object);
+      if (!selected) return;
       $("selectedName").textContent = selected.name;
       $("addSelectedBtn").disabled = false;
       $("posX").disabled = false; $("posZ").disabled = false;
+      if (selected.isExternal) showToast("CC0 model selected · it will load when added to the 3D room");
       renderCatalog();
     }));
+  }
+  async function loadFreeModels() {
+    try {
+      const response = await fetch("https://three.ws/api/objects/library?limit=500", {headers:{"Accept":"application/json"}});
+      if (!response.ok) throw new Error("Model library returned HTTP " + response.status);
+      const payload = await response.json();
+      const entries = Array.isArray(payload.objects) ? payload.objects : [];
+      const furniturePattern = /furniture|sofa|couch|chair|table|bed|cabinet|shelf|desk|lamp|lighting|rug|plant|stool|wardrobe|ottoman|nightstand|dresser|decor|interior/i;
+      freeModels = entries.filter(item => item && typeof item.url === "string" && /^https:\/\//i.test(item.url) && String(item.license).toUpperCase() === "CC0" && furniturePattern.test([item.label,item.name,...(item.categories||[]),...(item.tags||[])].join(" ")))
+        .map(item => {
+          const label = String(item.label || item.name || "Free 3D model").slice(0,120);
+          const rawCategory = [...(item.categories || []), ...(item.tags || [])].join(" ").toLowerCase();
+          const searchText = rawCategory + " " + label.toLowerCase();
+          let kind = "cabinet";
+          if (/sofa|couch|chair|seating|stool/.test(searchText)) kind = "sofa";
+          else if (/table|desk/.test(searchText)) kind = "table";
+          else if (/lamp|light/.test(searchText)) kind = "lamp";
+          else if (/plant|tree/.test(searchText)) kind = "plant";
+          else if (/bed/.test(searchText)) kind = "bed";
+          else if (/rug|carpet/.test(searchText)) kind = "rug";
+          return {id:"cc0-"+String(item.name || label),name:label,category:"Free 3D",price:"Free",kind,isExternal:true,modelUrl:item.url,thumb:typeof item.thumb==="string"&&/^https:\/\//i.test(item.thumb)?item.thumb:"",license:"CC0",source:item.source||"Poly Haven",tags:[...(item.categories||[]),...(item.tags||[])]};
+        });
+      freeModelsStatus = "ready";
+      const count = $("freeModelCount"); if (count) count.textContent = String(freeModels.length);
+    } catch (error) {
+      console.warn("[Generator3DROOMS] Free CC0 model library unavailable", error);
+      freeModelsStatus = "error";
+      const count = $("freeModelCount"); if (count) count.textContent = "Retry";
+    }
+    if (activeCategory === "Free 3D") renderCatalog();
   }
   $("searchInput").addEventListener("input", () => { visibleCount = PAGE_SIZE; renderCatalog(); });
   $("loadMoreObjects").addEventListener("click", () => { visibleCount += PAGE_SIZE; renderCatalog(); });
@@ -154,7 +198,8 @@
   $("addSelectedBtn").addEventListener("click", () => {
     if (!selected) return;
     if (window.Generator3DROOMSUnity?.isReady) {
-      window.Generator3DROOMSUnity.addObject(selected.name);
+      if (selected.isExternal) window.Generator3DROOMSUnity.addAsset(selected);
+      else window.Generator3DROOMSUnity.addObject(selected.name);
       showToast(`${selected.name} added to the 3D scene`);
     } else {
       window.Generator3DROOMSUnity?.load();
@@ -193,5 +238,6 @@
     saveHistory(); showToast("Layout concept generated");
   });
   renderCatalog();
+  loadFreeModels();
   saveHistory();
 })();
