@@ -40,6 +40,10 @@ jobs:
           grep -q 'RoomEnvironment' web/three-scene.js
           grep -q 'RoundedBoxGeometry' web/three-scene.js
           grep -q 'renderer.setSize(3840,2160,false)' web/three-scene.js
+          grep -q 'https://api.polyhaven.com/assets?type=models' web/app.js
+          grep -q 'Number(value) >= 4096' web/app.js
+          grep -q 'https://api.polyhaven.com/files/' web/three-scene.js
+          grep -q 'catalogRoomFilter' web/index.html
           grep -q 'id="export4kBtn"' web/index.html
           grep -q 'id="renderQuality"' web/index.html
           echo "Browser WebGL app validated. No Unity license or Unity editor is required."
