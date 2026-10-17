@@ -12,11 +12,11 @@ A browser-based room design studio with a dark studio workspace, preserved anima
 - The existing studio UI and CSS animations are retained; the Unity scaffold remains in the repository for reference but is not required for this app.
 
 ## Free detailed 3D furniture library
-The catalog includes a **Free 3D models** filter that loads CC0 GLB assets on demand from the public three.ws object-library API (its published library is sourced from Poly Haven). The app filters for furniture/interior-related entries, displays available thumbnails, and loads the selected GLB into the room with its original materials using Three.js GLTFLoader. Models are downloaded only when selected and added, not all at startup.
+The catalog includes a **Free 3D models** filter backed by the public Poly Haven API. It filters furniture/decor/interior assets whose source metadata confirms at least 4096px texture resolution, displays thumbnails, and requests the exact 4K glTF variant only when a model is added. Texture dependencies are resolved from the API file manifest. A room collection selector filters the catalogue for living rooms, bedrooms, offices, kitchens, dining rooms, bathrooms, kids rooms, entryways and laundry rooms. The live library count is source-driven; it does not contain 1,000 unique 4K models, so the app does not claim that it does.
 
-The live library requires an internet connection and the external API/CDN to be reachable from the user's browser. The UI labels these entries CC0 and displays a visible source credit, as required when using the live library API. If the remote API or a model URL is unavailable, the existing procedural catalog remains usable.
+The live library requires an internet connection and the external API/CDN to be reachable from the user's browser. Poly Haven assets are CC0 and the interface displays a visible source credit as requested by the live API terms. If the API or a model URL is unavailable, the procedural catalog remains usable.
 
-Source and licensing references: [three.ws object library documentation](https://github.com/nirholas/three.ws/blob/main/docs/object-library.md) · [Poly Haven API terms](https://polyhaven.com/our-api).
+Source and licensing references: [Poly Haven public API](https://polyhaven.com/our-api) · [Poly Haven model standards](https://docs.polyhaven.com/en/technical-standards/models).
 
 ## Important realism limits
 The room shell and built-in starter furniture are procedural meshes, while entries in **Free 3D models** are real external GLB assets. The exact number of live models depends on the remote library response and is not fixed at 1,000. The environment map is a studio reflection environment, not a path-traced representation of the actual room. The result is an editable 3D scene, not a photorealistic render guaranteed to match a photograph.
@@ -31,3 +31,7 @@ GitHub Pages deployment is intentionally manual because this repository currentl
 
 ## Catalog and assets
 The catalog contains procedural entries across six categories. Variants are generated from base templates and finish/size labels; they are not separate licensed photorealistic model files. External models are loaded from the remote CC0 library when selected; the procedural count of 1,000 remains a count of variants, not a count of downloadable model files.
+
+
+## Launching locally on Windows
+Do not double-click `web/index.html` directly. The Three.js ES modules and live model API need an HTTP origin. Run `Run-Generator3DROOMS.bat` from the repository root; it starts a local Python HTTP server on an available port and opens `/web/` in your browser. Keep the console window open while using the studio. The live 4K library requires internet access.
