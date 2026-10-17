@@ -39,5 +39,11 @@ jobs:
           grep -q 'three-scene.js' web/unity-bridge.js
           grep -q 'THREE.WebGLRenderer' web/three-scene.js
           grep -q 'OrbitControls' web/three-scene.js
+          grep -q 'GLTFLoader' web/three-scene.js
+          grep -q 'function addAsset' web/three-scene.js
+          grep -q 'https://three.ws/api/objects/library?limit=500' web/app.js
+          grep -q 'data-category="Free 3D"' web/index.html
+          grep -q 'CC0 · GLB' web/app.js
+          grep -q 'addAsset:asset=>api?.addAsset(asset)' web/unity-bridge.js
           grep -q 'Generator3DROOMS-WebGL' .github/workflows/unity-webgl.yml
           echo "Static browser WebGL checks passed. Live browser/GPU behavior is not tested in CI."
