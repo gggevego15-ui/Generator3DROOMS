@@ -122,6 +122,7 @@ function makeLamp(x,z) {
 }
 function clearFurniture(){selectedRoot=null;pickables.length=0;while(furnitureRoot.children.length)furnitureRoot.remove(furnitureRoot.children[0]);}
 function buildRoom() {
+  pickables.length=0; selectedRoot=null;
   width=clamp(Number($("roomWidth").value)||5,2,20);depth=clamp(Number($("roomDepth").value)||4,2,20);height=clamp(Number($("roomHeight").value)||2.8,2,6);
   if(roomRoot)scene.remove(roomRoot);
   roomRoot=new THREE.Group();scene.add(roomRoot);furnitureRoot=new THREE.Group();furnitureRoot.name="Furniture";roomRoot.add(furnitureRoot);
@@ -147,7 +148,7 @@ function buildRoom() {
   if(gridHelper){scene.remove(gridHelper);gridHelper=null;}
   gridHelper=new THREE.GridHelper(Math.max(width,depth),Math.max(8,Math.round(Math.max(width,depth)*2)),0x6f7b5c,0x5b6550);
   gridHelper.position.y=.008;gridHelper.material.transparent=true;gridHelper.material.opacity=.22;scene.add(gridHelper);gridHelper.visible=gridVisible;
-  updateLighting();
+  updateLighting(); lastType=$("roomType").value; lastDensity=$("density").value;
 }
 function addDefaultFurniture(){
   const type=$("roomType").value.toLowerCase(), density=$("density").value;
