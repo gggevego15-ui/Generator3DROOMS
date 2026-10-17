@@ -9,7 +9,7 @@ const canvas = $("unity-canvas");
 const notice = $("unityNotice");
 let renderer, scene, camera, controls, roomRoot, furnitureRoot, selectedRoot = null;
 let raycaster, pointer, drag = null, mode = "select", floor, sun, ambient, gridHelper, gridVisible = true, lastType = "", lastDensity = "";
-let quality = "balanced", selectionHelper = null, dragPlane, pmremGenerator, environmentTexture, renderInProgress = false, windowLight = null, snapEnabled = true;
+let quality = "balanced", selectionHelper = null, dragPlane, pmremGenerator, environmentTexture, renderInProgress = false, windowLight = null, snapEnabled = true, baseCameraDistance = 1;
 let width = 5, depth = 4, height = 2.8, lightPower = 65, shadowsEnabled = true;
 const pickables = [];
 const mats = {};
@@ -145,7 +145,7 @@ function buildRoom() {
   // Soft daylight is supported by a large area-like directional source and hemisphere fill.
   sun.position.set(-width*.4,height*1.8,depth*.3);sun.target.position.set(0,0,0);sun.target.updateMatrixWorld();
   if(windowLight){windowLight.position.set(winX,winY,-depth/2+1.15);windowLight.distance=Math.max(width,depth)*2.4;}
-  camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);camera.far=100;camera.updateProjectionMatrix();controls.update();
+  camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);baseCameraDistance=camera.position.distanceTo(controls.target);camera.far=100;camera.updateProjectionMatrix();controls.update();
   addDefaultFurniture();
   if(gridHelper){scene.remove(gridHelper);gridHelper.geometry.dispose();gridHelper.material.dispose();gridHelper=null;}
   gridHelper=new THREE.GridHelper(Math.max(width,depth),Math.max(8,Math.round(Math.max(width,depth)*2)),0x6f7b5c,0x5b6550);
@@ -274,8 +274,8 @@ function export4K(){if(renderInProgress||!renderer||!scene||!camera)return;rende
 function deleteSelected(){if(!selectedRoot)return;const root=selectedRoot;select(null);root.parent.remove(root);for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.selectableRoot===root)pickables.splice(i,1);}
 function rotateSelected(deg=15){if(selectedRoot)selectedRoot.rotation.y+=Number(deg)*Math.PI/180;}
 function toggleGrid(){gridVisible=!gridVisible;snapEnabled=gridVisible;if(gridHelper)gridHelper.visible=gridVisible;return gridVisible;}
-function zoomBy(factor){if(!camera||!controls)return;const offset=camera.position.clone().sub(controls.target).multiplyScalar(factor);camera.position.copy(controls.target.clone().add(offset));controls.update();const label=$("zoomLabel");if(label)label.textContent=Math.round(100*5/Math.max(.01,offset.length()))+"%";}
-function resetCamera(){if(!camera||!controls)return;camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);controls.update();}
+function zoomBy(factor){if(!camera||!controls)return;const offset=camera.position.clone().sub(controls.target).multiplyScalar(factor);camera.position.copy(controls.target.clone().add(offset));controls.update();const label=$("zoomLabel");if(label)label.textContent=Math.round(baseCameraDistance/Math.max(.01,camera.position.distanceTo(controls.target))*100)+"%";}
+function resetCamera(){if(!camera||!controls)return;camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);baseCameraDistance=camera.position.distanceTo(controls.target);controls.update();const label=$("zoomLabel");if(label)label.textContent="100%";}
 export const api={
   load:()=>{if(!renderer)init();return Promise.resolve(true);},
   get isReady(){return !!renderer;},
