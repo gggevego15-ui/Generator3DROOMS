@@ -1,32 +1,21 @@
 # Generator3DROOMS
 
-A browser-based room design studio with a Rentier-inspired workspace and a Unity WebGL 3D editor.
-
-## Product direction
-- Browser application with a canvas-first layout.
-- Unity WebGL for the interactive 3D scene.
-- Manual placement and procedural room furnishing.
-- A searchable catalog of 1,000 procedural entries generated from 50 base object templates × 20 finish/size combinations; these are not 1,000 separate photorealistic model files.
-- Free assets only, with license metadata recorded per imported asset.
-- Lightweight quality presets for integrated GPUs and memory-constrained PCs.
+A browser-based room design studio with a dark studio workspace, animated panels, a searchable procedural catalog, and a real-time Three.js WebGL room editor.
 
 ## Architecture
-- `web/`: browser shell and workspace UI.
-- `UnityProject/Assets/Scripts/`: runtime room generation and placement scripts.
-- `web/Build/`: destination for a Unity WebGL build (generated locally by Unity; build output is not committed).
+- `web/`: the browser application, including the preserved workspace design and CSS animations.
+- `web/three-scene.js`: real-time 3D renderer, room shell, physically based materials, procedural furniture, orbit camera, selection, moving and rotation.
+- `web/Build/`: not required. The scene runs directly in the browser with Three.js; there is no Unity license requirement.
+- `UnityProject/`: earlier experimental Unity scaffold retained in the repository, but not used by the browser app or current CI build.
 
-## Current status
-This is an early prototype, not a finished renderer. The web shell has an interactive workspace UI and an illustrative CSS room preview. The catalog currently generates 1,000 entries across furniture, lighting, decor, plants, architecture, and appliances. These entries use procedural placeholder geometry/material variations; imported licensed model assets are not included yet. Multi-part procedural items such as sofas, chairs, plants, beds, cabinets, and bathroom fixtures are grouped under one movable parent object. A built Unity WebGL player must be placed in `web/Build/` to enable real-time 3D rendering and placement.
+## Real-time 3D
+The browser scene uses Three.js and WebGL. It includes textured wood and plaster surfaces, glass, furniture, a plant, directional daylight, hemisphere fill, tone mapping, soft shadows, orbit controls, selectable furniture, drag-to-move and rotate modes, room dimensions, light controls, and room-type presets. Materials and geometry are generated procedurally; this is not yet a photogrammetry-based renderer and does not ship a library of photorealistic external furniture models.
 
-## Unity project and WebGL build
-- The Unity project root is `UnityProject/`; it includes the Unity version pin, package manifest, starter scene, build settings, and an Editor build entry point.
-- Open `UnityProject/` in Unity **2022.3.62f1 LTS** with **WebGL Build Support** installed.
-- The scene is `Assets/Scenes/Generator3DROOMS.unity`. The runtime bootstrap creates the room, camera, lighting, and procedural objects.
-- For a local build, open the scene in Unity and choose **Generator3DROOMS → Build WebGL**.
-- GitHub Actions has a manual workflow at **Actions → Build Generator3DROOMS WebGL → Run workflow**. Before running it, add a valid Unity license file as the repository Actions secret named `UNITY_LICENSE`. Do not commit the license file or place it in the repository.
-- The workflow verifies `Build.loader.js`, `Build.data`, `Build.framework.js`, and `Build.wasm`, then uploads a `Generator3DROOMS-WebGL` artifact. Static validation is not a Unity build.
-- Serve `web/` over HTTP (not by opening `index.html` directly). The Unity bridge expects `web/Build/Build.loader.js`.
-- Unity compilation, browser interaction, and GPU performance remain unverified until the Unity WebGL workflow succeeds and the result is tested in a browser.
+## Run locally
+Serve the `web/` folder over HTTP, for example with VS Code Live Server or `python -m http.server 8080` from the repository root, then open `http://localhost:8080/web/`. The app loads Three.js from jsDelivr, so an internet connection is needed unless the library is later vendored locally.
 
-## Asset policy
-Do not bundle downloaded models without checking their individual licenses. Prefer CC0 or clearly compatible free licenses and retain attribution/author/license/source metadata. Procedural primitives are used for the initial prototype. `scripts/validate-catalog.cjs` checks the catalog category totals and variant setup in CI. The existing web design and animations are preserved; Unity WebGL output is generated as a CI artifact and is not committed to source control.
+## GitHub Actions
+The workflow `Build Generator3DROOMS WebGL site` checks JavaScript and catalog invariants, packages the static browser app, and uploads a `Generator3DROOMS-WebGL` artifact. It does not invoke Unity and does not require a `UNITY_LICENSE` secret. Static validation is not a substitute for a live browser/GPU smoke test.
+
+## Catalog and assets
+The catalog contains 1,000 procedural entries across six categories. Variants are generated from base templates and finish/size labels; they are not 1,000 separate licensed photorealistic model files. The current 3D objects are procedural meshes. External models can be added later after verifying their individual licenses and retaining attribution.
