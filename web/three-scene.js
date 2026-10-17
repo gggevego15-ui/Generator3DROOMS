@@ -218,48 +218,58 @@ function addCatalogObject(name){
   g.name=name;select(g);return g;
 }
 async function addAsset(asset) {
-  if(!asset||typeof asset.modelUrl!=="string"||!/^https:\/\//i.test(asset.modelUrl)){setNotice("Model unavailable","The selected asset does not have a valid secure GLB URL.");notice.style.display="flex";return null;}
-  setNotice("Loading free 3D model",asset.name+" · downloading CC0 GLB…");notice.style.display="flex";
-  const loader=new GLTFLoader();
-  return new Promise(resolve=>{
-    loader.load(asset.modelUrl,gltf=>{
-      let root=null;
-      try{
-        root=new THREE.Group();root.name=String(asset.name||"Free 3D model").slice(0,120);
-        root.position.set((Math.random()-.5)*width*.45,0,(Math.random()-.5)*depth*.45);
-        const model=gltf.scene;root.add(model);furnitureRoot.add(root);root.updateMatrixWorld(true);
-        let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
-        const maxDim=Math.max(size.x,size.y,size.z);
-        if(maxDim>0){
-          const factor=maxDim>4?3/maxDim:maxDim<.35?1.1/maxDim:1;
-          model.scale.multiplyScalar(factor);root.updateMatrixWorld(true);
-          bounds.setFromObject(model);
-          const center=bounds.getCenter(new THREE.Vector3());
-          model.position.x-=center.x-root.position.x;
-          model.position.y-=bounds.min.y;
-          model.position.z-=center.z-root.position.z;
-          root.updateMatrixWorld(true);
-        }
-        root.userData.assetSource=String(asset.source||"CC0 asset library");
-        root.userData.assetLicense="CC0";
-        registerFurniture(root);select(root);
-        setNotice("Free model added",root.name+" · CC0 · loaded with its original materials.");
-        notice.style.display="flex";
-        $("generateStatus").textContent=root.name+" loaded. Select, move, rotate or scale it in the room.";
-        resolve(root);
-      }catch(error){
-        console.error("[Generator3DROOMS] Could not place CC0 model",error);
-        if(root&&root.parent)root.parent.remove(root);
-        rootCleanup(gltf.scene);
-        setNotice("Model placement failed","The GLB loaded, but its geometry could not be placed in the room.");
-        notice.style.display="flex";resolve(null);
-      }
-    },undefined,error=>{
-      console.error("[Generator3DROOMS] GLB download failed",error);
-      setNotice("Could not load model","The free GLB host may be unavailable or block this request. Try another model.");
-      notice.style.display="flex";resolve(null);
+  if(!asset||typeof asset.modelId!=="string"||!/^[a-z0-9_]+$/i.test(asset.modelId)){setNotice("Model unavailable","Choose a model from the verified 4K Poly Haven library.");notice.style.display="flex";return null;}
+  setNotice("Preparing verified 4K model",asset.name+" · loading CC0 model files and 4K textures…");notice.style.display="flex";
+  let loadedScene=null;
+  try{
+    const filesResponse=await fetch("https://api.polyhaven.com/files/"+encodeURIComponent(asset.modelId),{headers:{"Accept":"application/json"}});
+    if(!filesResponse.ok)throw new Error("Poly Haven files API returned HTTP "+filesResponse.status);
+    const fileTree=await filesResponse.json();
+    const variants=fileTree?.gltf||{};
+    const variant=variants["4k"]||variants["4K"]||variants["4096"]||null;
+    const modelFile=variant?.gltf||variant?.glb||variant;
+    if(!modelFile||typeof modelFile.url!=="string"||!/^https:\/\//i.test(modelFile.url))throw new Error("No downloadable glTF package with a 4K variant was published for this model.");
+    const dependencies=Object.entries(modelFile.include||variant?.include||{}).map(([path,file])=>({path:String(path).replace(/\\/g,"/").toLowerCase(),url:file?.url})).filter(file=>typeof file.url==="string"&&/^https:\/\//i.test(file.url));
+    const manager=new THREE.LoadingManager();
+    manager.setURLModifier(requestUrl=>{
+      const clean=decodeURIComponent(String(requestUrl)).split(/[?#]/)[0].replace(/\\/g,"/").toLowerCase();
+      const basename=clean.split("/").pop();
+      const dependency=dependencies.find(file=>clean.endsWith(file.path)||file.path.split("/").pop()===basename);
+      return dependency?dependency.url:requestUrl;
     });
-  });
+    const loader=new GLTFLoader(manager);
+    const gltf=await loader.loadAsync(modelFile.url);
+    loadedScene=gltf.scene;
+    const root=new THREE.Group();root.name=String(asset.name||"Free 4K 3D model").slice(0,120);
+    root.position.set((Math.random()-.5)*width*.45,0,(Math.random()-.5)*depth*.45);
+    root.add(gltf.scene);furnitureRoot.add(root);root.updateMatrixWorld(true);
+    const bounds=new THREE.Box3().setFromObject(gltf.scene),size=bounds.getSize(new THREE.Vector3());
+    const maxDim=Math.max(size.x,size.y,size.z);
+    if(maxDim>0){
+      const factor=maxDim>4?3/maxDim:maxDim<.35?1.1/maxDim:1;
+      gltf.scene.scale.multiplyScalar(factor);root.updateMatrixWorld(true);
+      bounds.setFromObject(gltf.scene);
+      const center=bounds.getCenter(new THREE.Vector3());
+      gltf.scene.position.x-=center.x-root.position.x;
+      gltf.scene.position.y-=bounds.min.y;
+      gltf.scene.position.z-=center.z-root.position.z;
+      root.updateMatrixWorld(true);
+    }
+    root.userData.assetSource="Poly Haven";
+    root.userData.assetLicense="CC0";
+    root.userData.textureResolution="4K";
+    registerFurniture(root);select(root);
+    setNotice("4K model added",root.name+" · Poly Haven CC0 · 4K glTF files loaded.");
+    notice.style.display="flex";
+    $("generateStatus").textContent=root.name+" loaded with the verified 4K model variant. Select, move, rotate or scale it.";
+    return root;
+  }catch(error){
+    console.error("[Generator3DROOMS] Could not load verified 4K Poly Haven model",error);
+    if(loadedScene)rootCleanup(loadedScene);
+    setNotice("Could not load 4K model",error?.message||"The model host may be unavailable or this asset has no 4K glTF variant.");
+    notice.style.display="flex";
+    return null;
+  }
 }
 function rootCleanup(object){object.traverse(child=>{if(child.geometry)child.geometry.dispose();});}
 function setMode(next){mode=next;canvas.style.cursor=next==="move"?"move":next==="rotate"?"ew-resize":"grab";}
