@@ -99,8 +99,14 @@
   $("resetView").addEventListener("click", () => setZoom(100));
   $("addSelectedBtn").addEventListener("click", () => {
     if (!selected) return;
-    showToast(`${selected.name} selected — Unity WebGL build required to place it in 3D.`);
-    $("generateStatus").textContent = `${selected.name} is selected. Connect the Unity WebGL player to place real 3D assets.`;
+    if (window.Generator3DROOMSUnity?.isReady) {
+      window.Generator3DROOMSUnity.addObject(selected.name);
+      showToast(`${selected.name} added to the 3D scene`);
+    } else {
+      window.Generator3DROOMSUnity?.load();
+      showToast("Unity WebGL build is required to place objects in 3D");
+    }
+    $("generateStatus").textContent = `${selected.name} selected. Add it to the scene when Unity WebGL is connected.`;
   });
   function saveHistory() {
     history.push({w:$("roomWidth").value,d:$("roomDepth").value,h:$("roomHeight").value,style:$("roomStyle").value});
