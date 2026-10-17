@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 /// <summary>
@@ -31,6 +32,16 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
     private Material fabricMaterial;
     private Material accentMaterial;
     private RoomSettings settings = new RoomSettings();
+    private Transform selectedFurniture;
+    private string editMode = "select";
+    private bool draggingFurniture;
+    private Vector3 dragOffset;
+    private float lastPointerX;
+    private Plane floorPlane;
+#if UNITY_WEBGL && !UNITY_EDITOR
+    [DllImport("__Internal")] private static extern void Generator3DROOMS_OnSelection(string objectName, float x, float z, float yaw);
+    [DllImport("__Internal")] private static extern void Generator3DROOMS_OnTransform(float x, float z, float yaw);
+#endif
 
     private void Awake()
     {
@@ -48,6 +59,128 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         furnitureRoot = furniture.transform;
         furnitureRoot.SetParent(transform, false);
         GenerateRoom(JsonUtility.ToJson(settings));
+        floorPlane = new Plane(Vector3.up, Vector3.zero);
+    }
+
+    private void Update()
+    {
+        if (sceneCamera == null || furnitureRoot == null) return;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = sceneCamera.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit, 500f))
+            {
+                Transform candidate = hit.transform;
+                while (candidate != null && candidate.parent != furnitureRoot)
+                    candidate = candidate.parent;
+
+                if (candidate != null && candidate.parent == furnitureRoot)
+                {
+                    SelectFurniture(candidate);
+                    draggingFurniture = editMode == "move" || editMode == "rotate";
+                    dragOffset = candidate.position - hit.point;
+                    lastPointerX = Input.mousePosition.x;
+                }
+                else
+                {
+                    draggingFurniture = false;
+                    if (editMode == "select") SelectFurniture(null);
+                }
+            }
+            else if (editMode == "select") SelectFurniture(null);
+        }
+
+        if (draggingFurniture && selectedFurniture != null && Input.GetMouseButton(0))
+        {
+            Vector3 pointer = Input.mousePosition;
+            if (editMode == "rotate")
+            {
+                float delta = pointer.x - lastPointerX;
+                selectedFurniture.Rotate(Vector3.up, delta * 0.7f, Space.World);
+                lastPointerX = pointer.x;
+                NotifySelection();
+            }
+            else if (editMode == "move")
+            {
+                Ray ray = sceneCamera.ScreenPointToRay(pointer);
+                if (floorPlane.Raycast(ray, out float enter))
+                {
+                    Vector3 point = ray.GetPoint(enter) + dragOffset;
+                    point.x = Mathf.Clamp(point.x, -settings.width * 0.5f + 0.25f, settings.width * 0.5f - 0.25f);
+                    point.z = Mathf.Clamp(point.z, -settings.depth * 0.5f + 0.25f, settings.depth * 0.5f - 0.25f);
+                    point.y = 0f;
+                    selectedFurniture.position = point;
+                    NotifyTransform();
+                }
+            }
+        }
+
+        if (Input.GetMouseButtonUp(0)) draggingFurniture = false;
+    }
+
+    private void SelectFurniture(Transform target)
+    {
+        selectedFurniture = target;
+        NotifySelection();
+    }
+
+    private void NotifySelection()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        try
+        {
+            Generator3DROOMS_OnSelection(selectedFurniture != null ? selectedFurniture.name : "", selectedFurniture != null ? selectedFurniture.position.x : 0f, selectedFurniture != null ? selectedFurniture.position.z : 0f, selectedFurniture != null ? selectedFurniture.eulerAngles.y : 0f);
+        }
+        catch (Exception exception) { Debug.LogWarning("Could not notify web editor selection: " + exception.Message); }
+#endif
+    }
+
+    private void NotifyTransform()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        try
+        {
+            Generator3DROOMS_OnTransform(selectedFurniture.position.x, selectedFurniture.position.z, selectedFurniture.eulerAngles.y);
+        }
+        catch (Exception exception) { Debug.LogWarning("Could not notify web editor transform: " + exception.Message); }
+#endif
+    }
+
+    public void SetEditMode(string mode)
+    {
+        if (mode == "select" || mode == "move" || mode == "rotate")
+            editMode = mode;
+        draggingFurniture = false;
+    }
+
+    public void SetSelectedPosition(string coordinates)
+    {
+        if (selectedFurniture == null || string.IsNullOrWhiteSpace(coordinates)) return;
+        string[] values = coordinates.Split(',');
+        if (values.Length < 2 || !float.TryParse(values[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x) ||
+            !float.TryParse(values[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float z)) return;
+        selectedFurniture.position = new Vector3(
+            Mathf.Clamp(x, -settings.width * 0.5f + 0.25f, settings.width * 0.5f - 0.25f),
+            selectedFurniture.position.y,
+            Mathf.Clamp(z, -settings.depth * 0.5f + 0.25f, settings.depth * 0.5f - 0.25f));
+        NotifyTransform();
+    }
+
+    public void RotateSelected(float degrees)
+    {
+        if (selectedFurniture == null) return;
+        selectedFurniture.Rotate(Vector3.up, degrees, Space.World);
+        NotifySelection();
+    }
+
+    public void DeleteSelectedObject()
+    {
+        if (selectedFurniture == null) return;
+        Destroy(selectedFurniture.gameObject);
+        selectedFurniture = null;
+        draggingFurniture = false;
+        NotifySelection();
     }
 
     private void BuildMaterials()
@@ -200,12 +333,15 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
 
     private void MakeBox(string objectName, Vector3 position, Vector3 scale, Material material)
     {
-        var item = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        item.name = objectName;
-        item.transform.SetParent(furnitureRoot, false);
-        item.transform.localPosition = position;
-        item.transform.localScale = scale;
-        item.GetComponent<Renderer>().sharedMaterial = material;
+        var group = new GameObject(objectName);
+        group.transform.SetParent(furnitureRoot, false);
+        group.transform.localPosition = position;
+        var mesh = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        mesh.name = "Mesh";
+        mesh.transform.SetParent(group.transform, false);
+        mesh.transform.localPosition = Vector3.zero;
+        mesh.transform.localScale = scale;
+        mesh.GetComponent<Renderer>().sharedMaterial = material;
     }
 
     private void MakeChair(Vector3 position)
