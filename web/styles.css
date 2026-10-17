@@ -48,3 +48,11 @@
 .object-scale-heading{margin-top:16px!important}
 .stage-tools{flex-wrap:wrap}
 @media(max-width:760px){.quality-select{max-width:88px}.export-4k-button{width:34px}}
+
+
+/* External CC0 model thumbnails and catalog source credit */
+.object-thumb img{width:100%;height:100%;object-fit:contain;padding:5px;filter:drop-shadow(0 7px 5px #0004);transition:transform .25s ease}
+.object-card:hover .object-thumb img{transform:scale(1.06)}
+.catalog-credit{font-size:9px;line-height:1.5;color:#737b6d;margin:12px 2px 0}
+.catalog-credit a{color:#a6b68a;text-decoration:none}
+.catalog-credit a:hover{color:var(--accent);text-decoration:underline}
