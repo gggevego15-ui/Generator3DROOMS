@@ -54,7 +54,7 @@
       <section class="center-stage">
         <div class="stage-toolbar">
           <div class="breadcrumb"><span>Projects</span><span class="crumb-slash">/</span><strong>Living room concept</strong></div>
-          <div class="stage-tools"><button class="tool-button active" title="Select">↖</button><button class="tool-button" title="Move">✥</button><button class="tool-button" title="Rotate">⟳</button><button class="tool-button" title="Scale">⤢</button><span class="toolbar-separator"></span><button class="tool-button" id="gridBtn" title="Toggle grid">▦</button></div>
+          <div class="stage-tools"><button class="tool-button active" data-mode="select" title="Select object">↖</button><button class="tool-button" data-mode="move" title="Move object — drag with mouse">✥</button><button class="tool-button" data-mode="rotate" title="Rotate object — drag horizontally">⟳</button><button class="tool-button" id="deleteSelectedBtn" title="Delete selected object" aria-label="Delete selected object">⌫</button><span class="toolbar-separator"></span><button class="tool-button" id="gridBtn" title="Toggle grid">▦</button></div>
         </div>
         <div class="scene-frame" id="sceneFrame">
           <div class="scene-background"></div>
@@ -101,7 +101,7 @@
           <p class="muted small">Select an object from the library to inspect its prototype metadata.</p>
           <div class="field-row"><label for="posX">Position X <span>m</span></label><label for="posZ">Position Z <span>m</span></label></div>
           <div class="field-row"><input id="posX" type="number" step=".1" value="0" disabled><input id="posZ" type="number" step=".1" value="0" disabled></div>
-          <button class="button button-outline" id="addSelectedBtn" disabled>＋ Add to scene</button>
+          <div class="selection-actions"><button class="button button-outline" id="addSelectedBtn" disabled>＋ Add to scene</button><button class="button button-outline" id="rotateStepBtn" disabled title="Rotate 15 degrees">⟳ 15°</button></div><button class="button button-quiet delete-object-button" id="deleteObjectBtn" disabled>Delete selected object</button>
         </section>
       </aside>
     </main>
