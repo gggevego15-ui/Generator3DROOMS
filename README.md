@@ -7,6 +7,7 @@ A browser-based room design studio with a dark studio workspace, preserved anima
 - Procedural 1024px wood, plaster and rug textures; bump maps and bevelled furniture geometry.
 - Live room dimensions and room-type/style presets, selectable furniture, selection outline, orbit camera, zoom, grid snapping, move/rotate/scale controls, duplicate and delete.
 - Balanced, High and Ultra render quality presets.
+- **GLB 3D scene export** packages the room geometry, placed furniture and supported materials/textures into `Generator3DROOMS-room.glb` for Blender and other GLB-compatible tools.
 - **4K PNG export at 3840 × 2160** through the browser renderer. The export temporarily renders a 16:9 frame at 4K and then restores the interactive viewport. Actual export depends on the browser and GPU render-target limits; Intel UHD may take time or refuse 4K allocation.
 - The existing studio UI and CSS animations are retained; the Unity scaffold remains in the repository for reference but is not required for this app.
 
@@ -18,15 +19,15 @@ The live library requires an internet connection and the external API/CDN to be 
 Source and licensing references: [three.ws object library documentation](https://github.com/nirholas/three.ws/blob/main/docs/object-library.md) · [Poly Haven API terms](https://polyhaven.com/our-api).
 
 ## Important realism limits
-The current scene is still a procedural mesh scene, not a photogrammetry renderer. The furniture models are generated from geometry and textures rather than a curated library of scanned, highly detailed assets. The environment map is a studio reflection environment, not a path-traced representation of the actual room. These improvements increase visual quality, but they do not make the result indistinguishable from a photograph.
+The room shell and built-in starter furniture are procedural meshes, while entries in **Free 3D models** are real external GLB assets. The exact number of live models depends on the remote library response and is not fixed at 1,000. The environment map is a studio reflection environment, not a path-traced representation of the actual room. The result is an editable 3D scene, not a photorealistic render guaranteed to match a photograph.
 
 ## Run locally
 Serve the `web/` folder over HTTP, for example with VS Code Live Server or `python -m http.server 8080` from the repository root, then open `http://localhost:8080/web/`. Three.js and its addons load from esm.sh, so an internet connection is needed unless the library is later vendored locally.
 
 ## GitHub Actions
-The workflow `Build Generator3DROOMS WebGL site` syntax-checks the browser modules, validates catalog invariants and the renderer/4K entry points, packages the static site, and uploads a `Generator3DROOMS-WebGL` artifact. It does not invoke Unity and does not require a `UNITY_LICENSE` secret. Passing CI proves static checks and packaging only; it is not a live browser/GPU test.
+The workflow `Build Generator3DROOMS WebGL site` syntax-checks the browser modules, validates catalog invariants and the renderer/GLB/4K export entry points, packages the static site, and uploads a `Generator3DROOMS-WebGL` artifact. It does not invoke Unity and does not require a `UNITY_LICENSE` secret. Passing CI proves static checks and packaging only; it is not a live browser/GPU test.
 
 GitHub Pages deployment is intentionally manual because this repository currently has no enabled Pages site. Enable it in **Settings → Pages → Build and deployment → Source: GitHub Actions**, then run the **Deploy web workspace to GitHub Pages** workflow.
 
 ## Catalog and assets
-The catalog contains procedural entries across six categories. Variants are generated from base templates and finish/size labels; they are not separate licensed photorealistic model files. External models can be added later after verifying their individual licenses and retaining attribution.
+The catalog contains procedural entries across six categories. Variants are generated from base templates and finish/size labels; they are not separate licensed photorealistic model files. External models are loaded from the remote CC0 library when selected; the procedural count of 1,000 remains a count of variants, not a count of downloadable model files.
