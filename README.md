@@ -10,6 +10,13 @@ A browser-based room design studio with a dark studio workspace, preserved anima
 - **4K PNG export at 3840 × 2160** through the browser renderer. The export temporarily renders a 16:9 frame at 4K and then restores the interactive viewport. Actual export depends on the browser and GPU render-target limits; Intel UHD may take time or refuse 4K allocation.
 - The existing studio UI and CSS animations are retained; the Unity scaffold remains in the repository for reference but is not required for this app.
 
+## Free detailed 3D furniture library
+The catalog includes a **Free 3D models** filter that loads CC0 GLB assets on demand from the public three.ws object-library API (its published library is sourced from Poly Haven). The app filters for furniture/interior-related entries, displays available thumbnails, and loads the selected GLB into the room with its original materials using Three.js GLTFLoader. Models are downloaded only when selected and added, not all at startup.
+
+The live library requires an internet connection and the external API/CDN to be reachable from the user's browser. The UI labels these entries CC0 and displays a visible source credit, as required when using the live library API. If the remote API or a model URL is unavailable, the existing procedural catalog remains usable.
+
+Source and licensing references: [three.ws object library documentation](https://github.com/nirholas/three.ws/blob/main/docs/object-library.md) · [Poly Haven API terms](https://polyhaven.com/our-api).
+
 ## Important realism limits
 The current scene is still a procedural mesh scene, not a photogrammetry renderer. The furniture models are generated from geometry and textures rather than a curated library of scanned, highly detailed assets. The environment map is a studio reflection environment, not a path-traced representation of the actual room. These improvements increase visual quality, but they do not make the result indistinguishable from a photograph.
 
