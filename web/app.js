@@ -1,15 +1,50 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-  const categories = [
-    {name:"Lounge chair",category:"Furniture",price:"Free",kind:"chair"},
-    {name:"Modular sofa",category:"Furniture",price:"Free",kind:"sofa"},
-    {name:"Coffee table",category:"Furniture",price:"Free",kind:"table"},
-    {name:"Pendant lamp",category:"Lighting",price:"Free",kind:"lamp"},
-    {name:"Indoor plant",category:"Plants",price:"Free",kind:"plant"},
-    {name:"Ceramic vase",category:"Decor",price:"Free",kind:"vase"},
-    {name:"Floor window",category:"Architecture",price:"Free",kind:"window"},
-    {name:"Side cabinet",category:"Furniture",price:"Free",kind:"cabinet"}
+  const catalogTemplates = [
+    {category:"Furniture", count:320, entries:[
+      ["Modular sofa","sofa"],["Loveseat","sofa"],["Armchair","chair"],["Dining chair","chair"],
+      ["Bar stool","chair"],["Coffee table","table"],["Dining table","table"],["Side table","table"],
+      ["TV console","cabinet"],["Bookshelf","cabinet"],["Wardrobe","cabinet"],["Bed frame","bed"],
+      ["Nightstand","cabinet"],["Writing desk","table"],["Dresser","cabinet"],["Bathroom vanity","sink"]
+    ]},
+    {category:"Lighting", count:120, entries:[
+      ["Floor lamp","lamp"],["Pendant lamp","lamp"],["Chandelier","lamp"],
+      ["Table lamp","lamp"],["Wall sconce","lamp"],["Track light","lamp"]
+    ]},
+    {category:"Decor", count:240, entries:[
+      ["Ceramic vase","vase"],["Decorative bowl","decor"],["Wall art","decor"],["Floor mirror","mirror"],
+      ["Table sculpture","decor"],["Candle holder","decor"],["Throw pillow","decor"],["Blanket","decor"],
+      ["Area rug","rug"],["Wall clock","decor"],["Book stack","decor"],["Picture frame","decor"]
+    ]},
+    {category:"Plants", count:80, entries:[
+      ["Indoor plant","plant"],["Tall palm","plant"],["Olive tree","plant"],["Succulent planter","plant"]
+    ]},
+    {category:"Architecture", count:140, entries:[
+      ["Window","window"],["Interior door","door"],["Sliding door","door"],["Room divider","partition"],
+      ["Archway","arch"],["Wall panel","panel"],["Skylight","window"]
+    ]},
+    {category:"Appliances", count:100, entries:[
+      ["Bathtub","bath"],["Shower enclosure","shower"],["Toilet","toilet"],
+      ["Washing machine","appliance"],["Refrigerator","appliance"]
+    ]}
   ];
+  const finishes = ["Natural oak","Warm walnut","Matte white","Graphite","Soft sage"];
+  const sizes = ["Compact","Standard","Wide","Premium"];
+  const categories = catalogTemplates.flatMap(group => {
+    const perTemplate = group.count / group.entries.length;
+    const items = [];
+    group.entries.forEach(([base, kind], baseIndex) => {
+      for (let i = 0; i < perTemplate; i++) {
+        const finish = finishes[i % finishes.length];
+        const size = sizes[Math.floor(i / finishes.length) % sizes.length];
+        const series = String(Math.floor(i / (finishes.length * sizes.length)) + 1).padStart(2, "0");
+        items.push({name:`${base} — ${finish} · ${size} · ${series}`, category:group.category, price:"Free", kind, baseName:base, id:`${group.category}-${baseIndex}-${i}`});
+      }
+    });
+    return items;
+  });
+  const PAGE_SIZE = 48;
+  let visibleCount = PAGE_SIZE;
   let activeCategory = "All";
   let selected = null;
   let zoom = 100;
@@ -36,13 +71,17 @@
   function renderCatalog() {
     const query = $("searchInput").value.trim().toLowerCase();
     const filtered = categories.filter(item => (activeCategory === "All" || item.category === activeCategory) && item.name.toLowerCase().includes(query));
-    $("objectGrid").innerHTML = filtered.map(item => `
+    const visible = filtered.slice(0, visibleCount);
+    $("objectGrid").innerHTML = visible.map(item => `
       <button class="object-card ${selected?.name === item.name ? "selected" : ""}" data-object="${item.name}">
         <span class="object-thumb"><svg viewBox="0 0 100 100" aria-hidden="true">${shapes[item.kind]}</svg></span>
         <span class="object-name">${item.name}</span>
         <span class="object-meta"><span>${item.category}</span><span class="free">${item.price}</span></span>
       </button>`).join("");
-    $("resultCount").textContent = `${filtered.length} procedural preview${filtered.length === 1 ? "" : "s"}`;
+    $("resultCount").textContent = `${filtered.length.toLocaleString()} procedural objects · showing ${visible.length.toLocaleString()}`;
+    const moreButton = $("loadMoreObjects");
+    moreButton.hidden = visible.length >= filtered.length;
+    moreButton.textContent = `Load more (${Math.min(PAGE_SIZE, filtered.length - visible.length)} of ${filtered.length - visible.length} remaining)`;
     $("objectGrid").querySelectorAll("[data-object]").forEach(button => button.addEventListener("click", () => {
       selected = categories.find(item => item.name === button.dataset.object);
       $("selectedName").textContent = selected.name;
@@ -51,9 +90,11 @@
       renderCatalog();
     }));
   }
-  $("searchInput").addEventListener("input", renderCatalog);
+  $("searchInput").addEventListener("input", () => { visibleCount = PAGE_SIZE; renderCatalog(); });
+  $("loadMoreObjects").addEventListener("click", () => { visibleCount += PAGE_SIZE; renderCatalog(); });
   document.querySelectorAll("[data-category]").forEach(button => button.addEventListener("click", () => {
     activeCategory = button.dataset.category;
+    visibleCount = PAGE_SIZE;
     document.querySelectorAll("[data-category]").forEach(el => el.classList.toggle("selected", el === button));
     renderCatalog();
   }));
@@ -100,7 +141,7 @@
   $("addSelectedBtn").addEventListener("click", () => {
     if (!selected) return;
     if (window.Generator3DROOMSUnity?.isReady) {
-      window.Generator3DROOMSUnity.addObject(selected.name);
+      window.Generator3DROOMSUnity.addObject(selected.baseName || selected.name);
       showToast(`${selected.name} added to the 3D scene`);
     } else {
       window.Generator3DROOMSUnity?.load();
