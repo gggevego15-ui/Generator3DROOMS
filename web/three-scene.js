@@ -1,6 +1,7 @@
 import * as THREE from "https://esm.sh/three@0.165.0";
 import { OrbitControls } from "https://esm.sh/three@0.165.0/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "https://esm.sh/three@0.165.0/examples/jsm/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "https://esm.sh/three@0.165.0/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 const $ = id => document.getElementById(id);
 const sceneFrame = $("sceneFrame");
@@ -8,7 +9,7 @@ const canvas = $("unity-canvas");
 const notice = $("unityNotice");
 let renderer, scene, camera, controls, roomRoot, furnitureRoot, selectedRoot = null;
 let raycaster, pointer, drag = null, mode = "select", floor, sun, ambient, gridHelper, gridVisible = true, lastType = "", lastDensity = "";
-let quality = "balanced", selectionHelper = null, dragPlane, pmremGenerator, environmentTexture, renderInProgress = false, windowLight = null;
+let quality = "balanced", selectionHelper = null, dragPlane, pmremGenerator, environmentTexture, renderInProgress = false, windowLight = null, snapEnabled = true;
 let width = 5, depth = 4, height = 2.8, lightPower = 65, shadowsEnabled = true;
 const pickables = [];
 const mats = {};
@@ -16,7 +17,7 @@ const selectionMat = new THREE.MeshStandardMaterial({color:0xd8f879,emissive:0x3
 const originalMaterials = new WeakMap();
 
 function canvasTexture(draw, repeatX=1, repeatY=1) {
-  const c = document.createElement("canvas"); c.width=512; c.height=512;
+  const c = document.createElement("canvas"); c.width=1024; c.height=1024;
   const ctx=c.getContext("2d"); draw(ctx,c.width,c.height);
   const tex=new THREE.CanvasTexture(c); tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
   tex.repeat.set(repeatX,repeatY); tex.colorSpace=THREE.SRGBColorSpace; return tex;
@@ -56,14 +57,11 @@ function box(parent,name,pos,size,material,opts={}) {
 }
 function roundedBox(parent,name,pos,size,material,r=.06) {
   const group=new THREE.Group();group.name=name;group.position.set(...pos);parent.add(group);
-  const core=box(group,name+" body",[0,0,0],[size[0]-r,size[1]-r,size[2]-r],material);
-  // Soft silhouette is added with small edge cylinders to avoid a visibly sharp CAD look.
-  const edgeMat=material;
-  for(const x of [-1,1]) for(const z of [-1,1]) {
-    const edge=new THREE.Mesh(new THREE.CylinderGeometry(r*.6,r*.6,size[1],8),edgeMat);
-    edge.position.set(x*(size[0]/2-r/2),0,z*(size[2]/2-r/2));edge.castShadow=true;group.add(edge);
-  }
-  core.position.y=0; return group;
+  const radius=Math.min(r,Math.min(size[0],size[1],size[2])*.22);
+  const geometry=new RoundedBoxGeometry(size[0],size[1],size[2],4,radius);
+  geometry.computeVertexNormals();
+  const mesh=new THREE.Mesh(geometry,material);mesh.name=name+" body";mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);
+  return group;
 }
 function makePlant(parent, x, z, scale=1) {
   const group=new THREE.Group();group.name="Indoor plant";group.position.set(x,0,z);parent.add(group);
@@ -125,8 +123,9 @@ function makeLamp(x,z) {
 function clearFurniture(){selectedRoot=null;pickables.length=0;while(furnitureRoot.children.length)furnitureRoot.remove(furnitureRoot.children[0]);}
 function buildRoom() {
   pickables.length=0; selectedRoot=null;
+  if(selectionHelper){scene.remove(selectionHelper);selectionHelper.geometry.dispose();selectionHelper=null;}
   width=clamp(Number($("roomWidth").value)||5,2,20);depth=clamp(Number($("roomDepth").value)||4,2,20);height=clamp(Number($("roomHeight").value)||2.8,2,6);
-  if(roomRoot)scene.remove(roomRoot);
+  if(roomRoot){roomRoot.traverse(o=>{if(o.geometry)o.geometry.dispose();});scene.remove(roomRoot);}
   roomRoot=new THREE.Group();scene.add(roomRoot);furnitureRoot=new THREE.Group();furnitureRoot.name="Furniture";roomRoot.add(furnitureRoot);
   const floorGeo=new THREE.PlaneGeometry(width,depth,Math.ceil(width*2),Math.ceil(depth*2));floor=new THREE.Mesh(floorGeo,mats.floor);floor.rotation.x=-Math.PI/2;floor.position.y=-.015;floor.receiveShadow=true;floor.name="Floor";roomRoot.add(floor);
   box(roomRoot,"Back wall",[0,height/2,-depth/2],[width,height,.14],mats.wall);
@@ -148,10 +147,12 @@ function buildRoom() {
   if(windowLight){windowLight.position.set(winX,winY,-depth/2+1.15);windowLight.distance=Math.max(width,depth)*2.4;}
   camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);camera.far=100;camera.updateProjectionMatrix();controls.update();
   addDefaultFurniture();
-  if(gridHelper){scene.remove(gridHelper);gridHelper=null;}
+  if(gridHelper){scene.remove(gridHelper);gridHelper.geometry.dispose();gridHelper.material.dispose();gridHelper=null;}
   gridHelper=new THREE.GridHelper(Math.max(width,depth),Math.max(8,Math.round(Math.max(width,depth)*2)),0x6f7b5c,0x5b6550);
   gridHelper.position.y=.008;gridHelper.material.transparent=true;gridHelper.material.opacity=.22;scene.add(gridHelper);gridHelper.visible=gridVisible;
   updateLighting(); lastType=$("roomType").value; lastDensity=$("density").value;
+  const dimensions=$("sceneDimensions");if(dimensions)dimensions.textContent=width.toFixed(1)+" m × "+depth.toFixed(1)+" m × "+height.toFixed(1)+" m";
+  const caption=$("sceneCaption");if(caption)caption.textContent=$("roomType").value+" · "+$("roomStyle").value;
 }
 function addDefaultFurniture(){
   const type=$("roomType").value.toLowerCase(), density=$("density").value;
@@ -254,7 +255,7 @@ function onPointerDown(e){
 function onPointerMove(e){
   if(!drag)return;
   if(mode==="rotate"){drag.root.rotation.y+=(e.clientX-drag.x)*.012;drag.x=e.clientX;}
-  else if(mode==="move"){const rect=canvas.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const point=new THREE.Vector3();if(raycaster.ray.intersectPlane(dragPlane,point)){drag.root.position.x=clamp(point.x+drag.offset.x,-width/2+.25,width/2-.25);drag.root.position.z=clamp(point.z+drag.offset.z,-depth/2+.25,depth/2-.25);}}
+  else if(mode==="move"){const rect=canvas.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const point=new THREE.Vector3();if(raycaster.ray.intersectPlane(dragPlane,point)){const px=point.x+drag.offset.x,pz=point.z+drag.offset.z;drag.root.position.x=clamp(snapEnabled?Math.round(px*4)/4:px,-width/2+.25,width/2-.25);drag.root.position.z=clamp(snapEnabled?Math.round(pz*4)/4:pz,-depth/2+.25,depth/2-.25);}}
   $("posX").value=drag.root.position.x.toFixed(2);$("posZ").value=drag.root.position.z.toFixed(2);
 }
 function onPointerUp(){if(drag){drag=null;controls.enabled=true;}}
@@ -262,7 +263,8 @@ function syncRoom(){
   lightPower=Number($("lightIntensity").value);shadowsEnabled=$("shadowToggle").classList.contains("on");
   const w=Number($("roomWidth").value)||5,d=Number($("roomDepth").value)||4,h=Number($("roomHeight").value)||2.8;
   if(Math.abs(w-width)>.01||Math.abs(d-depth)>.01||Math.abs(h-height)>.01||lastType!==$("roomType").value||lastDensity!==$("density").value)buildRoom();else updateLighting();
-  if(mats.wall){const style=$("roomStyle").value;if(style==="Scandinavian")mats.fabric.color.setHex(0xc0c4b6);else if(style==="Modern luxury")mats.fabric.color.setHex(0x41494b);else if(style==="Industrial")mats.fabric.color.setHex(0x777775);else if(style==="Japandi")mats.fabric.color.setHex(0xa9a18d);else mats.fabric.color.setHex(0x858b78);}
+  if(mats.wall){const style=$("roomStyle").value;if(style==="Scandinavian"){mats.fabric.color.setHex(0xc0c4b6);mats.wall.color.setHex(0xf0eee6);mats.wood.color.setHex(0xd3b88e);}else if(style==="Modern luxury"){mats.fabric.color.setHex(0x41494b);mats.wall.color.setHex(0xc7c5bf);mats.wood.color.setHex(0x4c3a2b);}else if(style==="Industrial"){mats.fabric.color.setHex(0x777775);mats.wall.color.setHex(0xa7a59e);mats.wood.color.setHex(0x6e5946);}else if(style==="Japandi"){mats.fabric.color.setHex(0xa9a18d);mats.wall.color.setHex(0xe5ddcc);mats.wood.color.setHex(0x9d7b59);}else{mats.fabric.color.setHex(0x858b78);mats.wall.color.setHex(0xd8d0bf);mats.wood.color.setHex(0x9c7955);}}
+  const caption=$("sceneCaption");if(caption)caption.textContent=$("roomType").value+" · "+$("roomStyle").value;
 }
 function generate(){buildRoom();setNotice("Room generated","Procedural layout updated · orbit, select and edit furniture");}
 function setPosition(){if(!selectedRoot)return;selectedRoot.position.x=clamp(Number($("posX").value)||0,-width/2,width/2);selectedRoot.position.z=clamp(Number($("posZ").value)||0,-depth/2,depth/2);if(selectionHelper)selectionHelper.update();}
@@ -271,7 +273,7 @@ function setQuality(next){quality=["balanced","high","ultra"].includes(next)?nex
 function export4K(){if(renderInProgress||!renderer||!scene||!camera)return;renderInProgress=true;sceneFrame.classList.add("exporting");const oldQuality=quality,oldAspect=camera.aspect,oldW=sceneFrame.clientWidth,oldH=sceneFrame.clientHeight;const max=renderer.getContext().getParameter(renderer.getContext().MAX_RENDERBUFFER_SIZE);if(max<3840){renderInProgress=false;sceneFrame.classList.remove("exporting");setNotice("4K unavailable","This GPU/browser supports a smaller render target.");notice.style.display="flex";return;}try{setQuality("ultra");renderer.setPixelRatio(1);renderer.setSize(3840,2160,false);camera.aspect=16/9;camera.updateProjectionMatrix();renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{try{if(!blob)throw new Error("Browser could not encode the 4K image");const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="Generator3DROOMS-4K.png";a.click();URL.revokeObjectURL(url);setNotice("4K image exported","3840 × 2160 PNG created by the browser renderer.");notice.style.display="flex";}catch(error){console.error(error);setNotice("4K export failed","Browser could not create the PNG image.");notice.style.display="flex";}finally{camera.aspect=oldAspect;camera.updateProjectionMatrix();setQuality(oldQuality);renderer.setSize(oldW,oldH,false);renderInProgress=false;sceneFrame.classList.remove("exporting");}}, "image/png");}catch(error){console.error("[Generator3DROOMS] 4K export failed",error);camera.aspect=oldAspect;camera.updateProjectionMatrix();setQuality(oldQuality);renderer.setSize(oldW,oldH,false);renderInProgress=false;sceneFrame.classList.remove("exporting");setNotice("4K export failed","This browser or GPU could not allocate a 4K frame.");notice.style.display="flex";}}
 function deleteSelected(){if(!selectedRoot)return;const root=selectedRoot;select(null);root.parent.remove(root);for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.selectableRoot===root)pickables.splice(i,1);}
 function rotateSelected(deg=15){if(selectedRoot)selectedRoot.rotation.y+=Number(deg)*Math.PI/180;}
-function toggleGrid(){gridVisible=!gridVisible;if(gridHelper)gridHelper.visible=gridVisible;return gridVisible;}
+function toggleGrid(){gridVisible=!gridVisible;snapEnabled=gridVisible;if(gridHelper)gridHelper.visible=gridVisible;return gridVisible;}
 function zoomBy(factor){if(!camera||!controls)return;const offset=camera.position.clone().sub(controls.target).multiplyScalar(factor);camera.position.copy(controls.target.clone().add(offset));controls.update();const label=$("zoomLabel");if(label)label.textContent=Math.round(100*5/Math.max(.01,offset.length()))+"%";}
 function resetCamera(){if(!camera||!controls)return;camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);controls.update();}
 export const api={
