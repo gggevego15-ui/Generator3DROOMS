@@ -391,7 +391,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         string lower = name.ToLowerInvariant();
         Vector3 position = new Vector3(UnityEngine.Random.Range(-settings.width * 0.3f, settings.width * 0.3f), 0f, UnityEngine.Random.Range(-settings.depth * 0.3f, settings.depth * 0.3f));
 
-        if (lower.Contains("plant") || lower.Contains("tree") || lower.Contains("palm")) MakePlant(position);
+        if (lower.Contains("plant") || lower.Contains("tree") || lower.Contains("palm")) MakePlant(position, name);
         else if (lower.Contains("chair") || lower.Contains("stool") || lower.Contains("armchair")) MakeChair(position, name);
         else if (lower.Contains("lamp") || lower.Contains("sconce") || lower.Contains("chandelier")) MakeLamp(position, name);
         else if (lower.Contains("sofa") || lower.Contains("couch")) MakeSofa(position, name);
@@ -415,7 +415,27 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
             MakeBox(name, position + Vector3.up * 0.45f, new Vector3(0.35f, 0.7f, 0.35f), accentMaterial);
         else MakeBox(name, position + Vector3.up * 0.35f, new Vector3(0.55f, 0.7f, 0.45f), accentMaterial);
 
+        ApplyCatalogVariant(lastCreatedFurniture, name);
         SelectFurniture(lastCreatedFurniture);
+    }
+
+    private void ApplyCatalogVariant(Transform root, string catalogName)
+    {
+        if (root == null) return;
+        string lower = (catalogName ?? "").ToLowerInvariant();
+        float scale = lower.Contains("compact") ? 0.82f : lower.Contains("wide") ? 1.18f : lower.Contains("premium") ? 1.08f : 1f;
+        root.localScale = new Vector3(scale, scale, scale);
+
+        // Single-mesh objects can take a finish directly. Composite pieces keep their
+        // intentionally mixed materials (fabric, wood, trim) while still changing size.
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
+        if (renderers.Length != 1) return;
+        Material finish = null;
+        if (lower.Contains("natural oak")) finish = woodMaterial;
+        else if (lower.Contains("warm walnut")) finish = accentMaterial;
+        else if (lower.Contains("matte white")) finish = wallMaterial;
+        else if (lower.Contains("soft sage")) finish = fabricMaterial;
+        if (finish != null) renderers[0].sharedMaterial = finish;
     }
 
     private void MakeSofa(Vector3 position, string objectName)
