@@ -47,6 +47,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Generator3DROOMS-WebGL
-          path: web/Build/
+          path: |
+            web/Build/
+            web/Generator3DROOMS.html
           if-no-files-found: error
           retention-days: 14
