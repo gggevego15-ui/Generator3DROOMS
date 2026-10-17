@@ -6,6 +6,8 @@ on:
     paths:
       - "web/**"
       - "scripts/**"
+      - "index.html"
+      - "Run-Generator3DROOMS.bat"
       - ".github/workflows/unity-webgl.yml"
   pull_request:
     paths:
@@ -31,6 +33,8 @@ jobs:
           test -s web/app.js
           test -s web/unity-bridge.js
           test -s web/three-scene.js
+          test -s index.html
+          test -s Run-Generator3DROOMS.bat
           node --check web/app.js
           node --check web/unity-bridge.js
           node --check --input-type=module < web/three-scene.js
@@ -41,7 +45,7 @@ jobs:
           grep -q 'RoundedBoxGeometry' web/three-scene.js
           grep -q 'renderer.setSize(3840,2160,false)' web/three-scene.js
           grep -q 'https://api.polyhaven.com/assets?type=models' web/app.js
-          grep -q 'Number(value) >= 4096' web/app.js
+          grep -q 'resolution.every(value => Number(value) >= 4096)' web/app.js
           grep -q 'https://api.polyhaven.com/files/' web/three-scene.js
           grep -q 'catalogRoomFilter' web/index.html
           grep -q 'id="export4kBtn"' web/index.html
