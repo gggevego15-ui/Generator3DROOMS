@@ -38,6 +38,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
     private bool draggingFurniture;
     private Vector3 dragOffset;
     private float lastPointerX;
+    private float dragObjectY;
     private Plane floorPlane;
 #if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")] private static extern void Generator3DROOMS_OnSelection(string objectName, float x, float z, float yaw);
@@ -85,6 +86,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
                     else
                         dragOffset = Vector3.zero;
                     dragOffset.y = 0f;
+                    dragObjectY = candidate.position.y;
                     lastPointerX = Input.mousePosition.x;
                 }
                 else
@@ -114,7 +116,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
                     Vector3 point = ray.GetPoint(enter) + dragOffset;
                     point.x = Mathf.Clamp(point.x, -settings.width * 0.5f + 0.25f, settings.width * 0.5f - 0.25f);
                     point.z = Mathf.Clamp(point.z, -settings.depth * 0.5f + 0.25f, settings.depth * 0.5f - 0.25f);
-                    point.y = 0f;
+                    point.y = dragObjectY;
                     selectedFurniture.position = point;
                     NotifyTransform();
                 }
