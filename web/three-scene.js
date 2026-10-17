@@ -3,6 +3,7 @@ import { OrbitControls } from "https://esm.sh/three@0.165.0/examples/jsm/control
 import { RoomEnvironment } from "https://esm.sh/three@0.165.0/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "https://esm.sh/three@0.165.0/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { GLTFLoader } from "https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js";
+import { GLTFExporter } from "https://esm.sh/three@0.165.0/examples/jsm/exporters/GLTFExporter.js";
 
 const $ = id => document.getElementById(id);
 const sceneFrame = $("sceneFrame");
@@ -316,6 +317,25 @@ function generate(){buildRoom();setNotice("Room generated","Procedural layout up
 function setPosition(){if(!selectedRoot)return;selectedRoot.position.x=clamp(Number($("posX").value)||0,-width/2,width/2);selectedRoot.position.z=clamp(Number($("posZ").value)||0,-depth/2,depth/2);if(selectionHelper)selectionHelper.update();}
 function setScale(value){if(!selectedRoot)return;const s=clamp(Number(value)||1,.25,3);selectedRoot.scale.setScalar(s);$("objectScaleValue").textContent=Math.round(s*100)+"%";if(selectionHelper)selectionHelper.update();}
 function setQuality(next){quality=["balanced","high","ultra"].includes(next)?next:"balanced";const dpr=window.devicePixelRatio||1;const ratio=quality==="ultra"?Math.min(dpr,2):quality==="high"?Math.min(dpr,1.6):Math.min(dpr,1.15);if(renderer){renderer.setPixelRatio(ratio);renderer.shadowMap.enabled=shadowsEnabled;sun.shadow.mapSize.set(quality==="ultra"?4096:quality==="high"?2048:1024);sun.shadow.needsUpdate=true;renderer.setSize(sceneFrame.clientWidth,sceneFrame.clientHeight,false);}if($("renderQuality"))$("renderQuality").value=quality;}
+
+function exportGLB(){
+  if(!renderer||!scene||!roomRoot){setNotice("3D scene not ready","Wait until the room finishes loading, then export again.");notice.style.display="flex";return;}
+  setNotice("Preparing GLB export","Packaging room geometry, furniture and materials…");notice.style.display="flex";
+  const exporter=new GLTFExporter();
+  exporter.parse(roomRoot,result=>{
+    try{
+      const blob=new Blob([result],{type:"model/gltf-binary"});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement("a");link.href=url;link.download="Generator3DROOMS-room.glb";link.style.display="none";document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+      setNotice("3D room exported","GLB includes room geometry and placed furniture. Open it in Blender or another GLB-compatible editor.");notice.style.display="flex";
+    }catch(error){console.error("[Generator3DROOMS] GLB download creation failed",error);setNotice("Export failed","The browser could not prepare the GLB download.");notice.style.display="flex";}
+  },error=>{
+    console.error("[Generator3DROOMS] GLB export failed",error);
+    setNotice("GLB export failed","Some materials or textures could not be packaged. Check the browser console for details.");notice.style.display="flex";
+  },{binary:true,onlyVisible:true,trs:false,embedImages:true});
+}
+
 function export4K(){if(renderInProgress||!renderer||!scene||!camera)return;renderInProgress=true;sceneFrame.classList.add("exporting");const oldQuality=quality,oldAspect=camera.aspect,oldW=sceneFrame.clientWidth,oldH=sceneFrame.clientHeight;const max=renderer.getContext().getParameter(renderer.getContext().MAX_RENDERBUFFER_SIZE);if(max<3840){renderInProgress=false;sceneFrame.classList.remove("exporting");setNotice("4K unavailable","This GPU/browser supports a smaller render target.");notice.style.display="flex";return;}try{setQuality("ultra");renderer.setPixelRatio(1);renderer.setSize(3840,2160,false);camera.aspect=16/9;camera.updateProjectionMatrix();renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{try{if(!blob)throw new Error("Browser could not encode the 4K image");const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="Generator3DROOMS-4K.png";a.click();URL.revokeObjectURL(url);setNotice("4K image exported","3840 × 2160 PNG created by the browser renderer.");notice.style.display="flex";}catch(error){console.error(error);setNotice("4K export failed","Browser could not create the PNG image.");notice.style.display="flex";}finally{camera.aspect=oldAspect;camera.updateProjectionMatrix();setQuality(oldQuality);renderer.setSize(oldW,oldH,false);renderInProgress=false;sceneFrame.classList.remove("exporting");}}, "image/png");}catch(error){console.error("[Generator3DROOMS] 4K export failed",error);camera.aspect=oldAspect;camera.updateProjectionMatrix();setQuality(oldQuality);renderer.setSize(oldW,oldH,false);renderInProgress=false;sceneFrame.classList.remove("exporting");setNotice("4K export failed","This browser or GPU could not allocate a 4K frame.");notice.style.display="flex";}}
 function deleteSelected(){if(!selectedRoot)return;const root=selectedRoot;select(null);root.parent.remove(root);for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.selectableRoot===root)pickables.splice(i,1);}
 function rotateSelected(deg=15){if(selectedRoot)selectedRoot.rotation.y+=Number(deg)*Math.PI/180;}
@@ -325,7 +345,7 @@ function resetCamera(){if(!camera||!controls)return;camera.position.set(width*.9
 export const api={
   load:()=>{if(!renderer)init();return Promise.resolve(true);},
   get isReady(){return !!renderer;},
-  addObject:addCatalogObject,addAsset,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,setScale,setQuality,export4K,toggleGrid,zoomBy,resetCamera,
+  addObject:addCatalogObject,addAsset,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,setScale,setQuality,export4K,exportGLB,toggleGrid,zoomBy,resetCamera,
   get selected(){return selectedRoot;}
 };
 init();
