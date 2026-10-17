@@ -17,7 +17,9 @@ The current scene is still a procedural mesh scene, not a photogrammetry rendere
 Serve the `web/` folder over HTTP, for example with VS Code Live Server or `python -m http.server 8080` from the repository root, then open `http://localhost:8080/web/`. Three.js and its addons load from esm.sh, so an internet connection is needed unless the library is later vendored locally.
 
 ## GitHub Actions
-The workflow `Build Generator3DROOMS WebGL site` syntax-checks the browser modules, validates catalog invariants and the renderer/4K entry points, packages the static site, and uploads a `Generator3DROOMS-WebGL` artifact. It does not invoke Unity and does not require a `UNITY_LICENSE` secret. Passing CI proves static checks and packaging only; it is not a live browser/GPU test.\n\nGitHub Pages deployment is intentionally manual because this repository currently has no enabled Pages site. Enable it in **Settings → Pages → Build and deployment → Source: GitHub Actions**, then run the **Deploy web workspace to GitHub Pages** workflow.
+The workflow `Build Generator3DROOMS WebGL site` syntax-checks the browser modules, validates catalog invariants and the renderer/4K entry points, packages the static site, and uploads a `Generator3DROOMS-WebGL` artifact. It does not invoke Unity and does not require a `UNITY_LICENSE` secret. Passing CI proves static checks and packaging only; it is not a live browser/GPU test.
+
+GitHub Pages deployment is intentionally manual because this repository currently has no enabled Pages site. Enable it in **Settings → Pages → Build and deployment → Source: GitHub Actions**, then run the **Deploy web workspace to GitHub Pages** workflow.
 
 ## Catalog and assets
 The catalog contains procedural entries across six categories. Variants are generated from base templates and finish/size labels; they are not separate licensed photorealistic model files. External models can be added later after verifying their individual licenses and retaining attribution.
