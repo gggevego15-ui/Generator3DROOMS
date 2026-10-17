@@ -33,6 +33,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
     private Material accentMaterial;
     private RoomSettings settings = new RoomSettings();
     private Transform selectedFurniture;
+    private Transform lastCreatedFurniture;
     private string editMode = "select";
     private bool draggingFurniture;
     private Vector3 dragOffset;
@@ -259,8 +260,11 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
     {
         ApplySettings(json);
         SetRoomDimensions(JsonUtility.ToJson(settings));
+        selectedFurniture = null;
+        draggingFurniture = false;
         ClearFurniture();
         AddFurnitureForSettings();
+        NotifySelection();
     }
 
     private void ApplySettings(string json)
@@ -324,6 +328,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
     public void AddCatalogObject(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return;
+        lastCreatedFurniture = null;
         string lower = name.ToLowerInvariant();
         Vector3 position = new Vector3(UnityEngine.Random.Range(-settings.width * 0.3f, settings.width * 0.3f), 0f, UnityEngine.Random.Range(-settings.depth * 0.3f, settings.depth * 0.3f));
         if (lower.Contains("plant")) MakePlant(position);
@@ -333,6 +338,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         else if (lower.Contains("sofa")) MakeBox(name, position + Vector3.up * 0.35f, new Vector3(1.8f, 0.7f, 0.75f), fabricMaterial);
         else if (lower.Contains("window")) MakeBox(name, new Vector3(position.x, settings.height * 0.55f, settings.depth * 0.48f), new Vector3(1.3f, 1.2f, 0.08f), accentMaterial);
         else MakeBox(name, position + Vector3.up * 0.35f, new Vector3(0.55f, 0.7f, 0.45f), accentMaterial);
+        SelectFurniture(lastCreatedFurniture);
     }
 
     private void MakeBox(string objectName, Vector3 position, Vector3 scale, Material material)
@@ -340,6 +346,7 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         var group = new GameObject(objectName);
         group.transform.SetParent(furnitureRoot, false);
         group.transform.localPosition = position;
+        lastCreatedFurniture = group.transform;
         var mesh = GameObject.CreatePrimitive(PrimitiveType.Cube);
         mesh.name = "Mesh";
         mesh.transform.SetParent(group.transform, false);
