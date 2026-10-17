@@ -8,7 +8,7 @@
     loadPromise = import("./three-scene.js").then(publish).catch(error => {
       console.error("[Generator3DROOMS] Could not load Three.js scene",error);
       const notice=$("unityNotice");
-      if(notice){notice.style.display="flex";notice.querySelector("strong").textContent="3D scene could not start";notice.querySelector("small").textContent="Check WebGL support and internet access for the Three.js library.";}
+      if(notice){notice.style.display="flex";notice.querySelector("strong").textContent=location.protocol==="file:"?"Запущено напрямую из файла":"3D-сцена не запустилась";notice.querySelector("small").textContent=location.protocol==="file:"?"Не открывай web/index.html двойным щелчком. Запусти Run-Generator3DROOMS.bat в корне проекта: 3D-движку нужен локальный HTTP-сервер и интернет.":"Проверь WebGL и доступ к интернету для загрузки Three.js и моделей."}
       loadPromise=null; return false;
     });
     return loadPromise;
