@@ -21,3 +21,7 @@ web/StreamingAssets/
 
 # Generated Unity WebGL entry point
 web/Generator3DROOMS.html
+
+# Temporary Unity WebGL build staging
+web/.unity-temp/
+web/TemplateData/
