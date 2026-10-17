@@ -59,3 +59,5 @@
 
 .export-3d-button{width:42px;font-size:10px;font-weight:800;letter-spacing:-.2px;color:#dce9c9;border-color:#a4b98a55;background:#a4b98a0c}.export-3d-button:hover{background:#a4b98a1c;box-shadow:0 0 18px #a4b98a16}
 @media(max-width:760px){.export-3d-button{width:36px}}
+
+.catalog-room-label{display:block;margin:0 0 6px;color:#9ca396;font-size:10px}.catalog-room-select{display:block;width:100%;height:34px;margin:0 0 12px;padding:0 9px;border:1px solid var(--border);border-radius:8px;background:#10120f;color:var(--text);font-size:10px}.catalog-room-select:focus{border-color:#d8f87966}
