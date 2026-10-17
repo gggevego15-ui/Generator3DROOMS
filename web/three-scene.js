@@ -222,8 +222,9 @@ async function addAsset(asset) {
   const loader=new GLTFLoader();
   return new Promise(resolve=>{
     loader.load(asset.modelUrl,gltf=>{
+      let root=null;
       try{
-        const root=new THREE.Group();root.name=String(asset.name||"Free 3D model").slice(0,120);
+        root=new THREE.Group();root.name=String(asset.name||"Free 3D model").slice(0,120);
         root.position.set((Math.random()-.5)*width*.45,0,(Math.random()-.5)*depth*.45);
         const model=gltf.scene;root.add(model);furnitureRoot.add(root);root.updateMatrixWorld(true);
         let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
@@ -247,6 +248,7 @@ async function addAsset(asset) {
         resolve(root);
       }catch(error){
         console.error("[Generator3DROOMS] Could not place CC0 model",error);
+        if(root&&root.parent)root.parent.remove(root);
         rootCleanup(gltf.scene);
         setNotice("Model placement failed","The GLB loaded, but its geometry could not be placed in the room.");
         notice.style.display="flex";resolve(null);
