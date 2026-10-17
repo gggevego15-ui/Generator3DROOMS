@@ -15,7 +15,7 @@
   }
   window.Generator3DROOMSUnity = {
     load, get isReady(){return !!api?.isReady;},
-    addObject:name=>api?.addObject(name), generate:()=>api?.generate(), syncRoom:()=>api?.syncRoom(),
+    addObject:name=>api?.addObject(name), addAsset:asset=>api?.addAsset(asset), generate:()=>api?.generate(), syncRoom:()=>api?.syncRoom(),
     setMode:mode=>api?.setMode(mode), deleteSelected:()=>api?.deleteSelected(),
     rotateSelected:degrees=>api?.rotateSelected(degrees), setSelectedPosition:()=>api?.setPosition(),
     setScale:value=>api?.setScale(value), setQuality:value=>api?.setQuality(value), export4K:()=>api?.export4K()
