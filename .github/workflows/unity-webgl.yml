@@ -1,0 +1,52 @@
+name: Build Generator3DROOMS WebGL
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-webgl:
+    name: Unity WebGL build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Unity license secret
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          if [ -z "$UNITY_LICENSE" ]; then
+            echo "::error::Missing repository Actions secret UNITY_LICENSE. Add a valid Unity Personal/Plus/Pro license file before running this workflow."
+            exit 1
+          fi
+
+      - name: Build Unity WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: UnityProject
+          unityVersion: 2022.3.62f1
+          targetPlatform: WebGL
+          buildMethod: Generator3DROOMSBuild.BuildWebGL
+          allowDirtyBuild: true
+
+      - name: Verify WebGL output
+        run: |
+          test -s web/Build/Build.loader.js
+          test -s web/Build/Build.data
+          test -s web/Build/Build.framework.js
+          test -s web/Build/Build.wasm
+          echo "Verified Unity WebGL loader, data, framework, and wasm outputs."
+
+      - name: Upload WebGL build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Generator3DROOMS-WebGL
+          path: web/Build/
+          if-no-files-found: error
+          retention-days: 14
