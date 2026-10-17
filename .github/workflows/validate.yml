@@ -37,6 +37,15 @@ jobs:
           test -s UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           test -s UnityProject/Assets/Scripts/RoomGenerator.cs
           test -s UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
+          test -s UnityProject/ProjectSettings/ProjectVersion.txt
+          test -s UnityProject/Packages/manifest.json
+          test -s UnityProject/Assets/Scenes/Generator3DROOMS.unity
+          test -s UnityProject/ProjectSettings/EditorBuildSettings.asset
+          test -s UnityProject/Assets/Editor/Generator3DROOMSBuild.cs
+          test -s .github/workflows/unity-webgl.yml
+          grep -q '2022.3.62f1' UnityProject/ProjectSettings/ProjectVersion.txt
+          grep -q 'Generator3DROOMSBuild.BuildWebGL' .github/workflows/unity-webgl.yml
+          grep -q 'Build.loader.js' .github/workflows/unity-webgl.yml
           grep -q 'public void SetEditMode' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           grep -q 'public void SetSelectedPosition' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           grep -q 'public void DeleteSelectedObject' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
@@ -44,5 +53,8 @@ jobs:
           grep -q 'private void ApplyCatalogVariant' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           grep -q 'private void MakeBathtub' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           grep -q 'Generator3DROOMS_OnSelection' UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
+          grep -q '6a0c9e91fcd84f17b0d7d4d12a4f5c91' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs.meta
+          grep -q '2e8f7a0b1e2b4b2c9f12a9f5c7d8e001' UnityProject/ProjectSettings/EditorBuildSettings.asset
+          grep -q 'm_Script: {fileID: 11500000, guid: 6a0c9e91fcd84f17b0d7d4d12a4f5c91, type: 3}' UnityProject/Assets/Scenes/Generator3DROOMS.unity
       - name: Report scope
         run: echo "Static checks passed. Unity compilation and WebGL build require Unity Editor and are not tested by this workflow."
