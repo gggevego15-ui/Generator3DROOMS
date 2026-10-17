@@ -31,6 +31,10 @@ jobs:
           test -s web/unity-bridge.js
           node --check web/app.js
           node --check web/unity-bridge.js
+          test -s web/three-scene.js
+          node --check --input-type=module < web/three-scene.js
+          grep -q 'THREE.WebGLRenderer' web/three-scene.js
+          grep -q 'OrbitControls' web/three-scene.js
           node scripts/validate-catalog.cjs
       - name: Validate Unity integration entry points
         run: |
