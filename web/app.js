@@ -62,7 +62,20 @@
     plant: '<path d="M50 66V25M50 49 28 30M50 43 70 23M50 36 42 14" stroke="#7f9b63" stroke-width="4" stroke-linecap="round"/><ellipse cx="27" cy="28" rx="13" ry="7" transform="rotate(30 27 28)" fill="#6c8755"/><ellipse cx="70" cy="22" rx="14" ry="8" transform="rotate(-35 70 22)" fill="#4d6c40"/><ellipse cx="42" cy="15" rx="12" ry="7" fill="#91a872"/><path d="M33 61h34l-5 23H38z" fill="#b49a7a"/>',
     vase: '<path d="M42 18h16l-2 13q-1 6 8 17l-1 23q-13 8-26 0l-1-23q9-11 8-17z" fill="#c7bda6"/><ellipse cx="50" cy="18" rx="8" ry="3" fill="#8e8876"/>',
     window: '<rect x="19" y="12" width="62" height="68" rx="2" fill="#9b896b"/><rect x="25" y="18" width="50" height="56" fill="#a8c5c0"/><path d="M50 18v56M25 46h50" stroke="#d4c8ad" stroke-width="4"/>',
-    cabinet: '<rect x="19" y="28" width="62" height="49" rx="3" fill="#a88966"/><rect x="23" y="32" width="26" height="41" fill="#c1a17b"/><rect x="51" y="32" width="26" height="41" fill="#b3916d"/><circle cx="44" cy="52" r="2" fill="#594a37"/><circle cx="56" cy="52" r="2" fill="#594a37"/><path d="M25 77v6M75 77v6" stroke="#514333" stroke-width="4"/>'
+    cabinet: '<rect x="19" y="28" width="62" height="49" rx="3" fill="#a88966"/><rect x="23" y="32" width="26" height="41" fill="#c1a17b"/><rect x="51" y="32" width="26" height="41" fill="#b3916d"/><circle cx="44" cy="52" r="2" fill="#594a37"/><circle cx="56" cy="52" r="2" fill="#594a37"/><path d="M25 77v6M75 77v6" stroke="#514333" stroke-width="4"/>',
+
+    bed: '<rect x="16" y="22" width="68" height="56" rx="4" fill="#987958"/><rect x="22" y="31" width="56" height="41" rx="4" fill="#d2c8b6"/><rect x="24" y="25" width="24" height="14" rx="3" fill="#e9e2d4"/>',
+    bath: '<rect x="12" y="32" width="76" height="40" rx="13" fill="#d5d8d0"/><rect x="20" y="38" width="60" height="25" rx="10" fill="#aabbb5"/>',
+    shower: '<path d="M20 14v70M80 14v70M20 14h60" stroke="#aeb8ae" stroke-width="4"/><rect x="24" y="20" width="52" height="60" fill="#9fbab6" fill-opacity=".55"/>',
+    toilet: '<rect x="37" y="16" width="28" height="27" rx="3" fill="#d8d9d0"/><path d="M28 43h44q-2 30-22 30T28 43z" fill="#e7e7df"/>',
+    sink: '<rect x="17" y="49" width="66" height="29" fill="#a78360"/><path d="M18 37q32-15 64 0l-5 15H23z" fill="#dedfd7"/>',
+    appliance: '<rect x="23" y="12" width="54" height="72" rx="4" fill="#b9bcb4"/><rect x="30" y="20" width="40" height="39" rx="3" fill="#687772"/><circle cx="50" cy="39" r="12" fill="#9fb6b2"/>',
+    mirror: '<rect x="25" y="12" width="50" height="76" rx="7" fill="#b89b78"/><rect x="31" y="18" width="38" height="64" rx="4" fill="#a9c3bf"/>',
+    rug: '<rect x="12" y="22" width="76" height="56" rx="4" fill="#9a8e78"/><rect x="18" y="28" width="64" height="44" fill="none" stroke="#d4c7ad" stroke-width="3"/>',
+    door: '<rect x="25" y="10" width="50" height="80" rx="2" fill="#9d7c59"/><rect x="31" y="16" width="38" height="68" fill="#b7956f"/>',
+    partition: '<rect x="13" y="18" width="74" height="64" fill="#a58a6a"/><path d="M38 18v64M62 18v64" stroke="#d7c5a7" stroke-width="4"/>',
+    panel: '<rect x="18" y="12" width="64" height="76" fill="#9a7958"/><path d="M26 20v60M40 20v60M54 20v60M68 20v60" stroke="#c4a27d" stroke-width="5"/>',
+    decor: '<circle cx="50" cy="50" r="28" fill="#bca98d"/><circle cx="50" cy="50" r="18" fill="none" stroke="#e1d5c1" stroke-width="4"/>'
   };
   function showToast(message) {
     const toast = $("toast"); toast.textContent = message; toast.classList.add("visible");
@@ -74,7 +87,7 @@
     const visible = filtered.slice(0, visibleCount);
     $("objectGrid").innerHTML = visible.map(item => `
       <button class="object-card ${selected?.name === item.name ? "selected" : ""}" data-object="${item.name}">
-        <span class="object-thumb"><svg viewBox="0 0 100 100" aria-hidden="true">${shapes[item.kind]}</svg></span>
+        <span class="object-thumb"><svg viewBox="0 0 100 100" aria-hidden="true">${(shapes[item.kind] || shapes.cabinet)}</svg></span>
         <span class="object-name">${item.name}</span>
         <span class="object-meta"><span>${item.category}</span><span class="free">${item.price}</span></span>
       </button>`).join("");
@@ -141,7 +154,7 @@
   $("addSelectedBtn").addEventListener("click", () => {
     if (!selected) return;
     if (window.Generator3DROOMSUnity?.isReady) {
-      window.Generator3DROOMSUnity.addObject(selected.baseName || selected.name);
+      window.Generator3DROOMSUnity.addObject(selected.name);
       showToast(`${selected.name} added to the 3D scene`);
     } else {
       window.Generator3DROOMSUnity?.load();
