@@ -112,7 +112,7 @@
       const thumb = item.isExternal && item.thumb
         ? `<img src="${escapeHtml(item.thumb)}" alt="" loading="lazy" decoding="async">`
         : `<svg viewBox="0 0 100 100" aria-hidden="true">${(shapes[item.kind] || shapes.cabinet)}</svg>`;
-      const meta = item.isExternal ? "CC0 · GLB" : item.category;
+      const meta = item.isExternal ? "CC0 · 4K glTF" : item.category;
       return `<button class="object-card ${selected?.name === item.name ? "selected" : ""}" data-object="${escapeHtml(item.id || item.name)}">
         <span class="object-thumb">${thumb}</span>
         <span class="object-name">${escapeHtml(item.name)}</span>
@@ -121,7 +121,7 @@
     }).join("");
     if (activeCategory === "Free 3D" && freeModelsStatus === "loading") $("resultCount").textContent = "Finding free CC0 models with verified 4K texture resolution…";
     else if (activeCategory === "Free 3D" && freeModelsStatus === "error") $("resultCount").textContent = "Model library unavailable — check your internet connection";
-    else if (activeCategory === "Free 3D") $("resultCount").textContent = `${filtered.length} verified 4K CC0 models shown · ${freeModelsTotal} available in the source`;
+    else if (activeCategory === "Free 3D") $("resultCount").textContent = `${filtered.length} verified 4K CC0 models shown · ${freeModels.length} in this catalog (${freeModelsTotal} source models checked)`;
     else if (activeCategory === "All" && catalogRoomFilter !== "All rooms") $("resultCount").textContent = `${filtered.length.toLocaleString()} procedural objects matching ${catalogRoomFilter.toLowerCase()} · showing ${visible.length.toLocaleString()}`;
     else $("resultCount").textContent = `${filtered.length.toLocaleString()} procedural objects · showing ${visible.length.toLocaleString()}`;
     const moreButton = $("loadMoreObjects");
