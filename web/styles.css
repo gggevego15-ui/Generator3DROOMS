@@ -56,3 +56,6 @@
 .catalog-credit{font-size:9px;line-height:1.5;color:#737b6d;margin:12px 2px 0}
 .catalog-credit a{color:#a6b68a;text-decoration:none}
 .catalog-credit a:hover{color:var(--accent);text-decoration:underline}
+
+.export-3d-button{width:42px;font-size:10px;font-weight:800;letter-spacing:-.2px;color:#dce9c9;border-color:#a4b98a55;background:#a4b98a0c}.export-3d-button:hover{background:#a4b98a1c;box-shadow:0 0 18px #a4b98a16}
+@media(max-width:760px){.export-3d-button{width:36px}}
