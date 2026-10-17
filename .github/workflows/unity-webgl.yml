@@ -1,6 +1,11 @@
 name: Build Generator3DROOMS WebGL
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "UnityProject/**"
+      - ".github/workflows/unity-webgl.yml"
   workflow_dispatch:
 
 permissions:
