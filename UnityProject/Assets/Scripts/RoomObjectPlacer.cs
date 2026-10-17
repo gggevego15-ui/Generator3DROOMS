@@ -19,6 +19,7 @@ public sealed class RoomObjectPlacer : MonoBehaviour
     public void BeginPlacement(GameObject prefab)
     {
         if (prefab == null) return;
+        if (selectedObject != null) Destroy(selectedObject);
         selectedObject = Instantiate(prefab);
         selectedObject.name = prefab.name;
         placementMode = true;
@@ -55,6 +56,13 @@ public sealed class RoomObjectPlacer : MonoBehaviour
             return;
         }
 
+        // Release ends placement after the object has followed the pointer.
+        if (Input.GetMouseButtonUp(0))
+        {
+            placementMode = false;
+            return;
+        }
+
         if (!Input.GetMouseButton(0)) return;
 
         Ray ray = sceneCamera.ScreenPointToRay(Input.mousePosition);
@@ -68,6 +76,5 @@ public sealed class RoomObjectPlacer : MonoBehaviour
         }
 
         selectedObject.transform.position = point;
-        if (Input.GetMouseButtonUp(0)) placementMode = false;
     }
 }
