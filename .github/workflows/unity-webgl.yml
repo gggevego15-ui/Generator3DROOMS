@@ -37,6 +37,11 @@ jobs:
           node scripts/validate-catalog.cjs
           grep -q 'three-scene.js' web/unity-bridge.js
           grep -q 'THREE.WebGLRenderer' web/three-scene.js
+          grep -q 'RoomEnvironment' web/three-scene.js
+          grep -q 'RoundedBoxGeometry' web/three-scene.js
+          grep -q 'renderer.setSize(3840,2160,false)' web/three-scene.js
+          grep -q 'id="export4kBtn"' web/index.html
+          grep -q 'id="renderQuality"' web/index.html
           echo "Browser WebGL app validated. No Unity license or Unity editor is required."
       - name: Package static WebGL site
         run: |
