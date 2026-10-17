@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111310">
+  <title>Generator3DROOMS — Interior Studio</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Generator3DROOMS home">
+        <span class="brand-mark">G<span>3</span></span>
+        <span>Generator<span class="brand-muted">3DROOMS</span></span>
+      </a>
+      <div class="project-title"><span class="status-dot"></span><span>Untitled room</span><span class="saved-label">Local project</span></div>
+      <div class="top-actions">
+        <button class="button button-quiet" id="undoBtn" title="Undo (prototype)">↶ <span>Undo</span></button>
+        <button class="button button-quiet" id="redoBtn" title="Redo (prototype)">↷ <span>Redo</span></button>
+        <button class="button button-primary" id="saveBtn">Save project</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="left-panel panel">
+        <div class="panel-heading"><div><span class="eyebrow">WORKSPACE</span><h1>Studio</h1></div><button class="icon-button" aria-label="Panel menu">•••</button></div>
+        <nav class="tool-nav" aria-label="Workspace tools">
+          <button class="nav-item active" data-tab="catalog"><span class="nav-icon">▦</span> Object library <span class="nav-count">1k</span></button>
+          <button class="nav-item" data-tab="layers"><span class="nav-icon">▤</span> Scene layers</button>
+          <button class="nav-item" data-tab="room"><span class="nav-icon">⌂</span> Room settings</button>
+        </nav>
+        <div class="panel-divider"></div>
+        <section id="catalogPanel" class="catalog-panel">
+          <div class="section-heading"><div><h2>Object library</h2><p>Find pieces for your room</p></div><button class="icon-button" aria-label="Filter catalog">☷</button></div>
+          <label class="searchbox"><span>⌕</span><input id="searchInput" type="search" placeholder="Search 1,000 objects…" autocomplete="off"></label>
+          <div class="category-list" id="categoryList">
+            <button class="category-chip selected" data-category="All">All objects <span>1,000</span></button>
+            <button class="category-chip" data-category="Furniture">Furniture <span>320</span></button>
+            <button class="category-chip" data-category="Lighting">Lighting <span>120</span></button>
+            <button class="category-chip" data-category="Decor">Decor <span>240</span></button>
+            <button class="category-chip" data-category="Plants">Plants <span>80</span></button>
+            <button class="category-chip" data-category="Architecture">Architecture <span>140</span></button>
+            <button class="category-chip" data-category="Appliances">Appliances <span>100</span></button>
+          </div>
+          <div class="section-heading results-heading"><div><h2>Starter objects</h2><p id="resultCount">8 procedural assets</p></div><span class="sort-label">Featured⌄</span></div>
+          <div class="object-grid" id="objectGrid"></div>
+          <p class="catalog-note">Starter assets are procedural previews. The full 1,000-asset library will be added with verified licenses.</p>
+        </section>
+        <section id="layersPanel" class="hidden secondary-panel"><h2>Scene layers</h2><p class="muted">Objects added to the scene will appear here when the Unity WebGL player is connected.</p></section>
+        <section id="roomPanel" class="hidden secondary-panel"><h2>Room dimensions</h2><p class="muted">Set room dimensions in the inspector or in the Unity scene settings.</p></section>
+      </aside>
+
+      <section class="center-stage">
+        <div class="stage-toolbar">
+          <div class="breadcrumb"><span>Projects</span><span class="crumb-slash">/</span><strong>Living room concept</strong></div>
+          <div class="stage-tools"><button class="tool-button active" title="Select">↖</button><button class="tool-button" title="Move">✥</button><button class="tool-button" title="Rotate">⟳</button><button class="tool-button" title="Scale">⤢</button><span class="toolbar-separator"></span><button class="tool-button" id="gridBtn" title="Toggle grid">▦</button></div>
+        </div>
+        <div class="scene-frame" id="sceneFrame">
+          <div class="scene-background"></div>
+          <div class="scene-meta"><span class="live-pill"><span></span> EDITOR PREVIEW</span><span class="scene-dimensions">5.0 m × 4.0 m × 2.8 m</span></div>
+          <div class="room-preview" id="roomPreview" aria-label="Illustrative room preview">
+            <div class="room-wall wall-back"></div><div class="room-wall wall-left"></div><div class="room-floor"></div>
+            <div class="window-frame"><div class="window-glass"></div><div class="window-cross vertical"></div><div class="window-cross horizontal"></div></div>
+            <div class="sunlight"></div>
+            <div class="sofa" id="previewSofa"><div class="sofa-back"></div><div class="sofa-seat"></div><div class="sofa-arm left"></div><div class="sofa-arm right"></div><div class="sofa-cushion one"></div><div class="sofa-cushion two"></div><div class="sofa-leg l1"></div><div class="sofa-leg l2"></div></div>
+            <div class="rug"></div><div class="coffee-table"><div class="table-top"></div><div class="table-leg a"></div><div class="table-leg b"></div></div>
+            <div class="plant"><div class="plant-leaves"></div><div class="plant-pot"></div></div>
+            <div class="floor-shadow"></div>
+          </div>
+          <div class="preview-caption"><span class="caption-icon">✦</span><div><strong>Living room · Warm minimal</strong><small>Illustrative preview · Unity 3D player not built yet</small></div></div>
+          <div class="viewport-controls"><button id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel">100%</span><button id="zoomIn" aria-label="Zoom in">+</button><span class="control-separator"></span><button id="resetView" aria-label="Reset view">⤢</button></div>
+          <div class="unity-notice" id="unityNotice"><span class="notice-icon">◈</span><div><strong>Unity WebGL player not connected</strong><small>Build the UnityProject to web/Build to enable real 3D placement.</small></div></div>
+        </div>
+        <footer class="stage-footer"><div class="footer-left"><span class="sync-dot"></span><span>Preview mode</span><span class="footer-divider"></span><span>Metric units</span></div><div class="footer-right"><span>Generator3DROOMS</span><span class="version-tag">ALPHA 0.1</span></div></footer>
+      </section>
+
+      <aside class="right-panel panel">
+        <div class="panel-heading"><div><span class="eyebrow">PROPERTIES</span><h1>Inspector</h1></div><button class="icon-button" aria-label="More properties">•••</button></div>
+        <section class="inspector-section"><div class="section-heading"><div><h2>Room setup</h2><p>Define your space</p></div><span class="section-glyph">⌂</span></div>
+          <div class="field-row"><label for="roomWidth">Width <span>m</span></label><label for="roomDepth">Depth <span>m</span></label></div>
+          <div class="field-row"><input id="roomWidth" type="number" min="2" max="20" step=".5" value="5"><input id="roomDepth" type="number" min="2" max="20" step=".5" value="4"></div>
+          <label class="field-label" for="roomHeight">Ceiling height <span>m</span></label><input id="roomHeight" type="number" min="2" max="6" step=".1" value="2.8">
+          <label class="field-label" for="roomStyle">Interior style</label><select id="roomStyle"><option>Warm minimal</option><option>Scandinavian</option><option>Modern luxury</option><option>Industrial</option><option>Japandi</option></select>
+        </section>
+        <div class="panel-divider"></div>
+        <section class="inspector-section"><div class="section-heading"><div><h2>Lighting</h2><p>Atmosphere & exposure</p></div><span class="section-glyph">☼</span></div>
+          <div class="range-heading"><label for="lightIntensity">Sunlight intensity</label><output id="lightValue">65%</output></div><input id="lightIntensity" type="range" min="0" max="100" value="65">
+          <div class="toggle-row"><div><strong>Soft shadows</strong><small>Ambient contact shading</small></div><button class="toggle on" id="shadowToggle" aria-pressed="true"><span></span></button></div>
+        </section>
+        <div class="panel-divider"></div>
+        <section class="inspector-section"><div class="section-heading"><div><h2>Generate a room</h2><p>Start with a layout</p></div><span class="section-glyph">✧</span></div>
+          <label class="field-label" for="roomType">Room type</label><select id="roomType"><option>Living room</option><option>Bedroom</option><option>Home office</option><option>Kitchen</option><option>Dining room</option></select>
+          <label class="field-label" for="density">Furniture density</label><select id="density"><option value="minimal">Minimal</option><option value="balanced" selected>Balanced</option><option value="full">Fully furnished</option></select>
+          <button class="button button-primary generate-button" id="generateBtn"><span>✦</span> Generate layout</button>
+          <p class="helper-text" id="generateStatus">Creates a layout plan preview. Real 3D generation activates after the Unity player is built.</p>
+        </section>
+        <div class="panel-divider"></div>
+        <section class="inspector-section selected-object"><div class="section-heading"><div><h2>Selected object</h2><p id="selectedName">No object selected</p></div><span class="selection-dot"></span></div>
+          <p class="muted small">Select an object from the library to inspect its prototype metadata.</p>
+          <div class="field-row"><label for="posX">Position X <span>m</span></label><label for="posZ">Position Z <span>m</span></label></div>
+          <div class="field-row"><input id="posX" type="number" step=".1" value="0" disabled><input id="posZ" type="number" step=".1" value="0" disabled></div>
+          <button class="button button-outline" id="addSelectedBtn" disabled>＋ Add to scene</button>
+        </section>
+      </aside>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
