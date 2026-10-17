@@ -1,17 +1,19 @@
-name: Validate Generator3DROOMS workspace
+name: Validate Generator3DROOMS browser workspace
 
 on:
   push:
     branches: [main]
     paths:
       - "web/**"
-      - "UnityProject/**"
+      - "scripts/**"
       - ".github/workflows/validate.yml"
+      - ".github/workflows/unity-webgl.yml"
   pull_request:
     paths:
       - "web/**"
-      - "UnityProject/**"
+      - "scripts/**"
       - ".github/workflows/validate.yml"
+      - ".github/workflows/unity-webgl.yml"
   workflow_dispatch:
 
 permissions:
@@ -23,43 +25,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate web files
+      - name: Validate browser WebGL app
         run: |
           test -s web/index.html
           test -s web/styles.css
           test -s web/app.js
           test -s web/unity-bridge.js
+          test -s web/three-scene.js
           node --check web/app.js
           node --check web/unity-bridge.js
-          test -s web/three-scene.js
           node --check --input-type=module < web/three-scene.js
+          node scripts/validate-catalog.cjs
+          grep -q 'three-scene.js' web/unity-bridge.js
           grep -q 'THREE.WebGLRenderer' web/three-scene.js
           grep -q 'OrbitControls' web/three-scene.js
-          node scripts/validate-catalog.cjs
-      - name: Validate Unity integration entry points
-        run: |
-          test -s UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
-          test -s UnityProject/Assets/Scripts/RoomGenerator.cs
-          test -s UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
-          test -s UnityProject/ProjectSettings/ProjectSettings.asset
-          test -s UnityProject/ProjectSettings/ProjectVersion.txt
-          test -s UnityProject/Packages/manifest.json
-          test -s UnityProject/Assets/Scenes/Generator3DROOMS.unity
-          test -s UnityProject/ProjectSettings/EditorBuildSettings.asset
-          test -s UnityProject/Assets/Editor/Generator3DROOMSBuild.cs
-          test -s .github/workflows/unity-webgl.yml
-          grep -q '2022.3.62f1' UnityProject/ProjectSettings/ProjectVersion.txt
-          grep -q 'Generator3DROOMSBuild.BuildWebGL' .github/workflows/unity-webgl.yml
-          grep -q 'Build.loader.js' .github/workflows/unity-webgl.yml
-          grep -q 'public void SetEditMode' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
-          grep -q 'public void SetSelectedPosition' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
-          grep -q 'public void DeleteSelectedObject' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
-          grep -q 'private void BeginComposite' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
-          grep -q 'private void ApplyCatalogVariant' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
-          grep -q 'private void MakeBathtub' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
-          grep -q 'Generator3DROOMS_OnSelection' UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
-          grep -q '6a0c9e91fcd84f17b0d7d4d12a4f5c91' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs.meta
-          grep -q '2e8f7a0b1e2b4b2c9f12a9f5c7d8e001' UnityProject/ProjectSettings/EditorBuildSettings.asset
-          grep -q 'm_Script: {fileID: 11500000, guid: 6a0c9e91fcd84f17b0d7d4d12a4f5c91, type: 3}' UnityProject/Assets/Scenes/Generator3DROOMS.unity
-      - name: Report scope
-        run: echo "Static checks passed. Unity compilation and WebGL build require Unity Editor and are not tested by this workflow."
+          grep -q 'Generator3DROOMS-WebGL' .github/workflows/unity-webgl.yml
+          echo "Static browser WebGL checks passed. Live browser/GPU behavior is not tested in CI."
