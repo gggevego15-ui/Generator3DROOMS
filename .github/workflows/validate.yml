@@ -45,9 +45,13 @@ jobs:
           grep -q 'id="export3dBtn"' web/index.html
           grep -q 'exportGLB:()=>api?.exportGLB()' web/unity-bridge.js
           grep -q 'function addAsset' web/three-scene.js
-          grep -q 'https://three.ws/api/objects/library?limit=500' web/app.js
+          grep -q 'https://api.polyhaven.com/assets?type=models' web/app.js
+          grep -q 'Number(value) >= 4096' web/app.js
+          grep -q 'catalogRoomFilter' web/index.html
+          grep -q 'https://api.polyhaven.com/files/' web/three-scene.js
+          grep -q '4K model added' web/three-scene.js
           grep -q 'data-category="Free 3D"' web/index.html
-          grep -q 'CC0 · GLB' web/app.js
+          grep -q 'verified 4K CC0 models' web/app.js
           grep -q 'addAsset:asset=>api?.addAsset(asset)' web/unity-bridge.js
           grep -q 'Generator3DROOMS-WebGL' .github/workflows/unity-webgl.yml
           echo "Static browser WebGL checks passed. Live browser/GPU behavior is not tested in CI."
