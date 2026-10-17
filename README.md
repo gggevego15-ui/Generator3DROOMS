@@ -22,6 +22,7 @@ This is an early prototype, not a finished renderer. The web shell has an intera
 - The Unity project root is `UnityProject/`; it includes the Unity version pin, package manifest, starter scene, build settings, and an Editor build entry point.
 - Open `UnityProject/` in Unity **2022.3.62f1 LTS** with **WebGL Build Support** installed.
 - The scene is `Assets/Scenes/Generator3DROOMS.unity`. The runtime bootstrap creates the room, camera, lighting, and procedural objects.
+- For a local build, open the scene in Unity and choose **Generator3DROOMS → Build WebGL**.
 - GitHub Actions has a manual workflow at **Actions → Build Generator3DROOMS WebGL → Run workflow**. Before running it, add a valid Unity license file as the repository Actions secret named `UNITY_LICENSE`. Do not commit the license file or place it in the repository.
 - The workflow verifies `Build.loader.js`, `Build.data`, `Build.framework.js`, and `Build.wasm`, then uploads a `Generator3DROOMS-WebGL` artifact. Static validation is not a Unity build.
 - Serve `web/` over HTTP (not by opening `index.html` directly). The Unity bridge expects `web/Build/Build.loader.js`.
