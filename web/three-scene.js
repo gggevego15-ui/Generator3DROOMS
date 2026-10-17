@@ -1,12 +1,12 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js";
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+import * as THREE from "https://esm.sh/three@0.165.0";
+import { OrbitControls } from "https://esm.sh/three@0.165.0/examples/jsm/controls/OrbitControls.js?external=three";
 
 const $ = id => document.getElementById(id);
 const sceneFrame = $("sceneFrame");
 const canvas = $("unity-canvas");
 const notice = $("unityNotice");
 let renderer, scene, camera, controls, roomRoot, furnitureRoot, selectedRoot = null;
-let raycaster, pointer, drag = null, mode = "select", floor, sun, ambient, gridHelper;
+let raycaster, pointer, drag = null, mode = "select", floor, sun, ambient, gridHelper, gridVisible = true, lastType = "", lastDensity = "";
 let width = 5, depth = 4, height = 2.8, lightPower = 65, shadowsEnabled = true;
 const pickables = [];
 const mats = {};
@@ -248,17 +248,17 @@ function onPointerUp(){if(drag){drag=null;controls.enabled=true;}}
 function syncRoom(){
   lightPower=Number($("lightIntensity").value);shadowsEnabled=$("shadowToggle").classList.contains("on");
   const w=Number($("roomWidth").value)||5,d=Number($("roomDepth").value)||4,h=Number($("roomHeight").value)||2.8;
-  if(Math.abs(w-width)>.01||Math.abs(d-depth)>.01||Math.abs(h-height)>.01)buildRoom();else updateLighting();
+  if(Math.abs(w-width)>.01||Math.abs(d-depth)>.01||Math.abs(h-height)>.01||lastType!==$("roomType").value||lastDensity!==$("density").value)buildRoom();else updateLighting();
   if(mats.wall){const style=$("roomStyle").value;if(style==="Scandinavian")mats.fabric.color.setHex(0xc0c4b6);else if(style==="Modern luxury")mats.fabric.color.setHex(0x41494b);else if(style==="Industrial")mats.fabric.color.setHex(0x777775);else if(style==="Japandi")mats.fabric.color.setHex(0xa9a18d);else mats.fabric.color.setHex(0x858b78);}
 }
 function generate(){buildRoom();setNotice("Room generated","Procedural layout updated · orbit, select and edit furniture");}
 function setPosition(){if(!selectedRoot)return;selectedRoot.position.x=clamp(Number($("posX").value)||0,-width/2,width/2);selectedRoot.position.z=clamp(Number($("posZ").value)||0,-depth/2,depth/2);}
 function deleteSelected(){if(!selectedRoot)return;const root=selectedRoot;select(null);root.parent.remove(root);for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.selectableRoot===root)pickables.splice(i,1);}
-function rotateSelected(deg=15){if(selectedRoot)selectedRoot.rotation.y+=Number(deg)*Math.PI/180;}
+function rotateSelected(deg=15){if(selectedRoot)selectedRoot.rotation.y+=Number(deg)*Math.PI/180;}\nfunction toggleGrid(){gridVisible=!gridVisible;if(gridHelper)gridHelper.visible=gridVisible;return gridVisible;}\nfunction zoomBy(factor){if(!camera||!controls)return;const offset=camera.position.clone().sub(controls.target).multiplyScalar(factor);camera.position.copy(controls.target.clone().add(offset));controls.update();}\nfunction resetCamera(){if(!camera||!controls)return;camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);controls.update();}
 export const api={
   load:()=>{if(!renderer)init();return Promise.resolve(true);},
   get isReady(){return !!renderer;},
-  addObject:addCatalogObject,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,
+  addObject:addCatalogObject,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,toggleGrid,zoomBy,resetCamera,
   get selected(){return selectedRoot;}
 };
 init();
