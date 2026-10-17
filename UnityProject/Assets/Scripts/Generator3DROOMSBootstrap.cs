@@ -392,8 +392,8 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         Vector3 position = new Vector3(UnityEngine.Random.Range(-settings.width * 0.3f, settings.width * 0.3f), 0f, UnityEngine.Random.Range(-settings.depth * 0.3f, settings.depth * 0.3f));
 
         if (lower.Contains("plant") || lower.Contains("tree") || lower.Contains("palm")) MakePlant(position);
-        else if (lower.Contains("chair") || lower.Contains("stool") || lower.Contains("armchair")) MakeChair(position);
-        else if (lower.Contains("lamp") || lower.Contains("sconce") || lower.Contains("chandelier")) MakeLamp(position);
+        else if (lower.Contains("chair") || lower.Contains("stool") || lower.Contains("armchair")) MakeChair(position, name);
+        else if (lower.Contains("lamp") || lower.Contains("sconce") || lower.Contains("chandelier")) MakeLamp(position, name);
         else if (lower.Contains("sofa") || lower.Contains("couch")) MakeSofa(position, name);
         else if (lower.Contains("bed")) MakeBed(position, name);
         else if (lower.Contains("rug") || lower.Contains("blanket")) MakeRug(position, name);
@@ -402,10 +402,11 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
             MakeCabinet(position, name);
         else if (lower.Contains("table") || lower.Contains("desk") || lower.Contains("island") || lower.Contains("counter"))
             MakeBox(name, position + Vector3.up * 0.4f, new Vector3(1f, 0.12f, 0.65f), woodMaterial);
+        else if (lower.Contains("sink") || lower.Contains("washbasin") || lower.Contains("vanity"))
+            MakeVanity(position, name);
         else if (lower.Contains("bath") || lower.Contains("tub")) MakeBathtub(position, name);
         else if (lower.Contains("shower")) MakeShower(position);
         else if (lower.Contains("toilet") || lower.Contains("wc")) MakeToilet(position);
-        else if (lower.Contains("sink") || lower.Contains("washbasin") || lower.Contains("vanity")) MakeVanity(position, name);
         else if (lower.Contains("washing machine") || lower.Contains("dishwasher") || lower.Contains("refrigerator") || lower.Contains("oven"))
             MakeBox(name, position + Vector3.up * 0.5f, new Vector3(0.7f, 1f, 0.65f), wallMaterial);
         else if (lower.Contains("window") || lower.Contains("door") || lower.Contains("partition") || lower.Contains("arch"))
@@ -427,9 +428,9 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         EndComposite();
     }
 
-    private void MakeChair(Vector3 position)
+    private void MakeChair(Vector3 position, string objectName = "Lounge chair")
     {
-        BeginComposite("Lounge chair", position);
+        BeginComposite(objectName, position);
         MakeBox("Chair seat", position + new Vector3(0f, 0.45f, 0f), new Vector3(0.8f, 0.16f, 0.75f), fabricMaterial);
         MakeBox("Chair back", position + new Vector3(0f, 0.82f, 0.28f), new Vector3(0.8f, 0.7f, 0.14f), fabricMaterial);
         MakeBox("Chair leg left", position + new Vector3(-0.3f, 0.2f, -0.25f), new Vector3(0.06f, 0.4f, 0.06f), woodMaterial);
@@ -437,17 +438,17 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         EndComposite();
     }
 
-    private void MakePlant(Vector3 position)
+    private void MakePlant(Vector3 position, string objectName = "Indoor plant")
     {
-        BeginComposite("Indoor plant", position);
+        BeginComposite(objectName, position);
         MakeBox("Plant pot", position + new Vector3(0f, 0.2f, 0f), new Vector3(0.35f, 0.4f, 0.35f), accentMaterial);
         MakeBox("Plant foliage", position + new Vector3(0f, 0.65f, 0f), new Vector3(0.55f, 0.65f, 0.55f), fabricMaterial);
         EndComposite();
     }
 
-    private void MakeLamp(Vector3 position)
+    private void MakeLamp(Vector3 position, string objectName = "Floor lamp")
     {
-        BeginComposite("Floor lamp", position);
+        BeginComposite(objectName, position);
         MakeBox("Floor lamp stem", position + new Vector3(0f, 0.7f, 0f), new Vector3(0.04f, 1.4f, 0.04f), woodMaterial);
         MakeBox("Floor lamp shade", position + new Vector3(0f, 1.45f, 0f), new Vector3(0.4f, 0.22f, 0.4f), accentMaterial);
         EndComposite();
