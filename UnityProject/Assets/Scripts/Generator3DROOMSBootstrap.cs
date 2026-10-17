@@ -395,9 +395,14 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         else if (lower.Contains("chair") || lower.Contains("stool") || lower.Contains("armchair")) MakeChair(position);
         else if (lower.Contains("lamp") || lower.Contains("sconce") || lower.Contains("chandelier")) MakeLamp(position);
         else if (lower.Contains("sofa") || lower.Contains("couch")) MakeSofa(position, name);
+        else if (lower.Contains("bed")) MakeBed(position, name);
+        else if (lower.Contains("rug") || lower.Contains("blanket")) MakeRug(position, name);
+        else if (lower.Contains("mirror")) MakeMirror(position, name);
+        else if (lower.Contains("wardrobe") || lower.Contains("dresser") || lower.Contains("cabinet") || lower.Contains("console") || lower.Contains("bookshelf"))
+            MakeCabinet(position, name);
         else if (lower.Contains("table") || lower.Contains("desk") || lower.Contains("island") || lower.Contains("counter"))
             MakeBox(name, position + Vector3.up * 0.4f, new Vector3(1f, 0.12f, 0.65f), woodMaterial);
-        else if (lower.Contains("bath") || lower.Contains("tub")) MakeBox(name, position + Vector3.up * 0.25f, new Vector3(1.65f, 0.5f, 0.78f), accentMaterial);
+        else if (lower.Contains("bath") || lower.Contains("tub")) MakeBathtub(position, name);
         else if (lower.Contains("shower")) MakeShower(position);
         else if (lower.Contains("toilet") || lower.Contains("wc")) MakeToilet(position);
         else if (lower.Contains("sink") || lower.Contains("washbasin") || lower.Contains("vanity")) MakeVanity(position, name);
@@ -445,6 +450,41 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         BeginComposite("Floor lamp", position);
         MakeBox("Floor lamp stem", position + new Vector3(0f, 0.7f, 0f), new Vector3(0.04f, 1.4f, 0.04f), woodMaterial);
         MakeBox("Floor lamp shade", position + new Vector3(0f, 1.45f, 0f), new Vector3(0.4f, 0.22f, 0.4f), accentMaterial);
+        EndComposite();
+    }
+
+    private void MakeBed(Vector3 position, string objectName)
+    {
+        BeginComposite(objectName, position);
+        MakeBox("Bed frame", position + new Vector3(0f, 0.22f, 0f), new Vector3(1.9f, 0.35f, 1.7f), woodMaterial);
+        MakeBox("Mattress", position + new Vector3(0f, 0.45f, 0f), new Vector3(1.8f, 0.2f, 1.58f), fabricMaterial);
+        MakeBox("Headboard", position + new Vector3(0f, 0.72f, 0.78f), new Vector3(1.9f, 0.95f, 0.12f), accentMaterial);
+        EndComposite();
+    }
+
+    private void MakeRug(Vector3 position, string objectName)
+    {
+        MakeBox(objectName, position + new Vector3(0f, 0.025f, 0f), new Vector3(2f, 0.035f, 1.4f), fabricMaterial);
+    }
+
+    private void MakeMirror(Vector3 position, string objectName)
+    {
+        MakeBox(objectName, position + new Vector3(0f, 1.1f, 0f), new Vector3(0.9f, 1.6f, 0.06f), fabricMaterial);
+    }
+
+    private void MakeCabinet(Vector3 position, string objectName)
+    {
+        BeginComposite(objectName, position);
+        MakeBox("Cabinet body", position + new Vector3(0f, 0.55f, 0f), new Vector3(0.9f, 1.1f, 0.5f), woodMaterial);
+        MakeBox("Cabinet front", position + new Vector3(0f, 0.55f, -0.26f), new Vector3(0.82f, 0.98f, 0.035f), accentMaterial);
+        EndComposite();
+    }
+
+    private void MakeBathtub(Vector3 position, string objectName)
+    {
+        BeginComposite(objectName, position);
+        MakeBox("Tub shell", position + new Vector3(0f, 0.24f, 0f), new Vector3(1.65f, 0.48f, 0.78f), wallMaterial);
+        MakeBox("Tub interior", position + new Vector3(0f, 0.49f, 0f), new Vector3(1.42f, 0.04f, 0.57f), accentMaterial);
         EndComposite();
     }
 
