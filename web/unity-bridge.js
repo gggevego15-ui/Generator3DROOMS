@@ -18,7 +18,7 @@
     addObject:name=>api?.addObject(name), addAsset:asset=>api?.addAsset(asset), generate:()=>api?.generate(), syncRoom:()=>api?.syncRoom(),
     setMode:mode=>api?.setMode(mode), deleteSelected:()=>api?.deleteSelected(),
     rotateSelected:degrees=>api?.rotateSelected(degrees), setSelectedPosition:()=>api?.setPosition(),
-    setScale:value=>api?.setScale(value), setQuality:value=>api?.setQuality(value), export4K:()=>api?.export4K()
+    setScale:value=>api?.setScale(value), setQuality:value=>api?.setQuality(value), export4K:()=>api?.export4K(), exportGLB:()=>api?.exportGLB()
   };
   document.querySelectorAll("[data-mode]").forEach(button=>button.addEventListener("click",()=>{
     document.querySelectorAll("[data-mode]").forEach(el=>el.classList.toggle("active",el===button));
@@ -31,6 +31,7 @@
   $("objectScale").addEventListener("input",e=>api?.setScale(e.target.value));
   $("renderQuality").addEventListener("change",e=>api?.setQuality(e.target.value));
   $("export4kBtn").addEventListener("click",()=>{if(api?.isReady)api.export4K();else load().then(ok=>{if(ok)api?.export4K();});});
+  $("export3dBtn").addEventListener("click",()=>{if(api?.isReady)api.exportGLB();else load().then(ok=>{if(ok)api?.exportGLB();});});
   $("generateBtn").addEventListener("click",()=>{if(api?.isReady)api.generate();else load().then(ok=>{if(ok)api?.generate();});});
   $("addSelectedBtn").addEventListener("click",()=>{const name=$("selectedName").textContent;if(api?.isReady&&name&&name!=="No object selected")api.addObject(name);});
   $("deleteSelectedBtn").addEventListener("click",()=>api?.deleteSelected());
