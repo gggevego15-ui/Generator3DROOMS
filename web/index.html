@@ -33,7 +33,8 @@
         <div class="panel-divider"></div>
         <section id="catalogPanel" class="catalog-panel">
           <div class="section-heading"><div><h2>Object library</h2><p>Find pieces for your room</p></div><button class="icon-button" aria-label="Filter catalog">☷</button></div>
-          <label class="searchbox"><span>⌕</span><input id="searchInput" type="search" placeholder="Search 1,000 objects…" autocomplete="off"></label>
+          <label class="searchbox"><span>⌕</span><input id="searchInput" type="search" placeholder="Search furniture, decor, materials…" autocomplete="off"></label>
+          <label class="catalog-room-label" for="catalogRoomFilter">Room collection</label><select class="catalog-room-select" id="catalogRoomFilter"><option>All rooms</option><option>Living room</option><option>Bedroom</option><option>Home office</option><option>Kitchen</option><option>Dining room</option><option>Bathroom</option><option>Kids room</option><option>Entryway</option><option>Laundry room</option></select>
           <div class="category-list" id="categoryList">
             <button class="category-chip selected" data-category="All">All objects <span>1,000</span></button>
             <button class="category-chip" data-category="Furniture">Furniture <span>320</span></button>
@@ -46,7 +47,7 @@
           </div>
           <div class="section-heading results-heading"><div><h2>Starter objects</h2><p id="resultCount">Procedural catalog · loading free CC0 models…</p></div><span class="sort-label">Featured⌄</span></div>
           <div class="object-grid" id="objectGrid"></div><button class="button button-outline catalog-more" id="loadMoreObjects" type="button">Load more objects</button><p class="catalog-credit">Free CC0 model library · <a href="https://three.ws/objects" target="_blank" rel="noreferrer">Three.ws / Poly Haven</a></p>
-          <p class="catalog-note">1,000 procedural variations plus a live catalogue of free CC0 furniture and decor models. Procedural items are editable placeholders; CC0 GLB entries are real downloadable 3D assets.</p>
+          <p class="catalog-note">The 1,000 starter entries are procedural variations, not 1,000 unique scanned assets. Free 3D shows only real Poly Haven models whose source metadata confirms at least 4K texture resolution; the exact count depends on the live library.</p>
         </section>
         <section id="layersPanel" class="hidden secondary-panel"><h2>Scene layers</h2><p class="muted">Select, duplicate, move, rotate, scale and delete objects in the live WebGL scene.</p></section>
         <section id="roomPanel" class="hidden secondary-panel"><h2>Room dimensions</h2><p class="muted">Set dimensions in the inspector and see the live room update immediately.</p></section>
