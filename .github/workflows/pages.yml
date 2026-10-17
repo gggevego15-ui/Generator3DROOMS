@@ -28,8 +28,13 @@ jobs:
           test -s web/index.html
           test -s web/styles.css
           test -s web/app.js
+          test -s web/unity-bridge.js
+          node --check web/app.js
+          node --check web/unity-bridge.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Upload web workspace
         uses: actions/upload-pages-artifact@v3
         with:
