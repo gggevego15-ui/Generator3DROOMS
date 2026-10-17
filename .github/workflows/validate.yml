@@ -37,6 +37,7 @@ jobs:
           test -s UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           test -s UnityProject/Assets/Scripts/RoomGenerator.cs
           test -s UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
+          test -s UnityProject/ProjectSettings/ProjectSettings.asset
           test -s UnityProject/ProjectSettings/ProjectVersion.txt
           test -s UnityProject/Packages/manifest.json
           test -s UnityProject/Assets/Scenes/Generator3DROOMS.unity
