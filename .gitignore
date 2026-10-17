@@ -1,0 +1,20 @@
+# Unity generated files
+UnityProject/Library/
+UnityProject/Temp/
+UnityProject/Obj/
+UnityProject/Logs/
+UnityProject/UserSettings/
+UnityProject/MemoryCaptures/
+UnityProject/Recordings/
+
+# Generated WebGL build output
+web/Build/
+web/StreamingAssets/
+
+# IDE files
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
