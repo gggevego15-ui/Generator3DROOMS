@@ -1,5 +1,6 @@
 import * as THREE from "https://esm.sh/three@0.165.0";
 import { OrbitControls } from "https://esm.sh/three@0.165.0/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "https://esm.sh/three@0.165.0/examples/jsm/environments/RoomEnvironment.js";
 
 const $ = id => document.getElementById(id);
 const sceneFrame = $("sceneFrame");
@@ -7,6 +8,7 @@ const canvas = $("unity-canvas");
 const notice = $("unityNotice");
 let renderer, scene, camera, controls, roomRoot, furnitureRoot, selectedRoot = null;
 let raycaster, pointer, drag = null, mode = "select", floor, sun, ambient, gridHelper, gridVisible = true, lastType = "", lastDensity = "";
+let quality = "balanced", selectionHelper = null, dragPlane, pmremGenerator, environmentTexture, renderInProgress = false, windowLight = null;
 let width = 5, depth = 4, height = 2.8, lightPower = 65, shadowsEnabled = true;
 const pickables = [];
 const mats = {};
@@ -34,14 +36,14 @@ function makeMaterials() {
     for(let i=0;i<5000;i++){ctx.fillStyle=Math.random()>.5?"rgba(245,235,215,.12)":"rgba(62,53,40,.08)";ctx.fillRect(Math.random()*w,Math.random()*h,1,2);}
     ctx.strokeStyle="rgba(236,225,202,.6)";ctx.lineWidth=7;ctx.strokeRect(24,24,w-48,h-48);ctx.strokeRect(39,39,w-78,h-78);
   },1,1);
-  mats.wall=new THREE.MeshStandardMaterial({map:plaster,roughness:.91});
-  mats.floor=new THREE.MeshStandardMaterial({map:wood,roughness:.66});
-  mats.wood=new THREE.MeshStandardMaterial({map:wood,roughness:.45});
+  mats.wall=new THREE.MeshStandardMaterial({map:plaster,bumpMap:plaster,bumpScale:.025,roughness:.94,envMapIntensity:.28});
+  mats.floor=new THREE.MeshStandardMaterial({map:wood,bumpMap:wood,bumpScale:.035,roughness:.68,envMapIntensity:.42});
+  mats.wood=new THREE.MeshStandardMaterial({map:wood,bumpMap:wood,bumpScale:.018,roughness:.43,envMapIntensity:.55});
   mats.fabric=new THREE.MeshStandardMaterial({color:0x858b78,roughness:.96});
   mats.cushion=new THREE.MeshStandardMaterial({color:0xc5b69d,roughness:.94});
   mats.darkWood=new THREE.MeshStandardMaterial({color:0x4d4032,roughness:.55});
   mats.metal=new THREE.MeshStandardMaterial({color:0x292c29,metalness:.72,roughness:.3});
-  mats.glass=new THREE.MeshPhysicalMaterial({color:0xb5d7dc,roughness:.13,metalness:.08,transmission:.22,transparent:true,opacity:.6,side:THREE.DoubleSide});
+  mats.glass=new THREE.MeshPhysicalMaterial({color:0xc5e5ed,roughness:.09,metalness:.02,transmission:.35,transparent:true,opacity:.52,ior:1.45,thickness:.12,side:THREE.DoubleSide,envMapIntensity:.9});
   mats.white=new THREE.MeshStandardMaterial({color:0xe9e5da,roughness:.28});
   mats.leaf=new THREE.MeshStandardMaterial({color:0x4f7043,roughness:.85});
   mats.rug=new THREE.MeshStandardMaterial({map:rug,roughness:1});
@@ -143,6 +145,7 @@ function buildRoom() {
   box(roomRoot,"Window sill",[winX,winY-winH/2-.05,-depth/2+.02],[winW+.24,.1,.2],mats.wood);
   // Soft daylight is supported by a large area-like directional source and hemisphere fill.
   sun.position.set(-width*.4,height*1.8,depth*.3);sun.target.position.set(0,0,0);sun.target.updateMatrixWorld();
+  if(windowLight){windowLight.position.set(winX,winY,-depth/2+1.15);windowLight.distance=Math.max(width,depth)*2.4;}
   camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);camera.far=100;camera.updateProjectionMatrix();controls.update();
   addDefaultFurniture();
   if(gridHelper){scene.remove(gridHelper);gridHelper=null;}
@@ -178,19 +181,23 @@ function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
 function updateLighting(){
   sun.intensity=.7+lightPower/100*2.2;ambient.intensity=.45+lightPower/100*.55;
   sun.castShadow=shadowsEnabled;renderer.shadowMap.enabled=shadowsEnabled;
+  sun.shadow.bias=-.00012;sun.shadow.normalBias=.025;
+  if($("lightValue"))$("lightValue").textContent=Math.round(lightPower)+"%";
   if(gridHelper)gridHelper.visible=gridVisible;
 }
 function select(root){
   if(selectedRoot){selectedRoot.traverse(o=>{if(o.isMesh&&originalMaterials.has(o))o.material=originalMaterials.get(o);});}
   selectedRoot=root;
+  if(selectionHelper){scene.remove(selectionHelper);selectionHelper.geometry.dispose();selectionHelper=null;}
   if(root){
+    selectionHelper=new THREE.BoxHelper(root,0xd8f879);scene.add(selectionHelper);
     root.traverse(o=>{if(o.isMesh){if(!originalMaterials.has(o))originalMaterials.set(o,o.material);}});
-    $("selectedName").textContent=root.name;$("posX").disabled=false;$("posZ").disabled=false;
+    $("selectedName").textContent=root.name;$("posX").disabled=false;$("posZ").disabled=false;$("objectScale").disabled=false;$("objectScale").value=Number(root.scale.x||1);$("objectScaleValue").textContent=Math.round((root.scale.x||1)*100)+"%";
     $("posX").value=root.position.x.toFixed(2);$("posZ").value=root.position.z.toFixed(2);
     $("addSelectedBtn").disabled=false;$("rotateStepBtn").disabled=false;$("deleteObjectBtn").disabled=false;$("deleteSelectedBtn").disabled=false;
     $("generateStatus").textContent=root.name+" selected · drag to move, use rotate mode to turn.";
   } else {
-    $("selectedName").textContent="No object selected";$("posX").disabled=true;$("posZ").disabled=true;
+    $("selectedName").textContent="No object selected";$("posX").disabled=true;$("posZ").disabled=true;$("objectScale").disabled=true;$("objectScale").value=1;$("objectScaleValue").textContent="100%";
     $("addSelectedBtn").disabled=true;$("rotateStepBtn").disabled=true;$("deleteObjectBtn").disabled=true;$("deleteSelectedBtn").disabled=true;
   }
 }
@@ -211,38 +218,42 @@ function setMode(next){mode=next;canvas.style.cursor=next==="move"?"move":next==
 function init(){
   try{
     renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.setSize(sceneFrame.clientWidth,sceneFrame.clientHeight,false);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));renderer.setSize(sceneFrame.clientWidth,sceneFrame.clientHeight,false);
+    renderer.physicallyCorrectLights=true;renderer.toneMappingExposure=1.05;
     renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
-    scene=new THREE.Scene();scene.background=new THREE.Color(0x25291f);scene.fog=new THREE.Fog(0x25291f,15,35);
+    renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+    scene=new THREE.Scene();scene.background=new THREE.Color(0x25291f);scene.fog=new THREE.Fog(0x25291f,22,48);
+    pmremGenerator=new THREE.PMREMGenerator(renderer);environmentTexture=pmremGenerator.fromScene(new RoomEnvironment(),0.04).texture;scene.environment=environmentTexture;scene.environmentIntensity=.68;
     camera=new THREE.PerspectiveCamera(42,sceneFrame.clientWidth/sceneFrame.clientHeight,.1,100);
     makeMaterials();
     ambient=new THREE.HemisphereLight(0xe8e8d7,0x786653,.85);scene.add(ambient);
-    sun=new THREE.DirectionalLight(0xffe4bc,2.1);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=12;sun.shadow.camera.bottom=-12;sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
-    const fill=new THREE.DirectionalLight(0xc5d9ff,.48);fill.position.set(5,4,5);scene.add(fill);
+    sun=new THREE.DirectionalLight(0xffe4bc,2.1);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=12;sun.shadow.camera.bottom=-12;sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
+    const fill=new THREE.DirectionalLight(0xc5d9ff,.62);fill.position.set(5,4,5);scene.add(fill);
+    windowLight=new THREE.PointLight(0xffe3bd,9,12,1.65);windowLight.position.set(-1,1.8,1.5);scene.add(windowLight);
     controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.06;controls.minDistance=3;controls.maxDistance=18;controls.maxPolarAngle=Math.PI*.49;
-    raycaster=new THREE.Raycaster();pointer=new THREE.Vector2();
+    raycaster=new THREE.Raycaster();pointer=new THREE.Vector2();dragPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+    setQuality($("renderQuality")?.value||"balanced");
     buildRoom();
     sceneFrame.classList.add("unity-ready");sceneFrame.classList.remove("unity-loading");
     notice.style.display="none";
     window.addEventListener("resize",resize);
     canvas.addEventListener("pointerdown",onPointerDown);window.addEventListener("pointermove",onPointerMove);window.addEventListener("pointerup",onPointerUp);
-    const animate=()=>{requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);};animate();
+    const animate=()=>{requestAnimationFrame(animate);controls.update();if(selectionHelper)selectionHelper.update();renderer.render(scene,camera);};animate();
     setNotice("Real-time 3D ready","WebGL scene active · no Unity license required");
     window.dispatchEvent(new CustomEvent("generator3drooms:three-ready"));
   }catch(e){console.error("[Generator3DROOMS] Three.js initialization failed",e);setNotice("WebGL unavailable","Try updating the browser or enabling hardware acceleration.");}
 }
-function resize(){if(!renderer||!camera)return;const w=sceneFrame.clientWidth,h=sceneFrame.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){if(!renderer||!camera||renderInProgress)return;const w=sceneFrame.clientWidth,h=sceneFrame.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 function onPointerDown(e){
   if(e.button!==0)return;const rect=canvas.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);
   const hits=raycaster.intersectObjects(pickables,true);
-  if(hits.length){const root=hits[0].object.userData.selectableRoot||hits[0].object;select(root);if(mode==="move"||mode==="rotate"){drag={root,x:e.clientX,z:e.clientY,origX:root.position.x,origZ:root.position.z};controls.enabled=false;} }
+  if(hits.length){const root=hits[0].object.userData.selectableRoot||hits[0].object;select(root);if(mode==="move"||mode==="rotate"){const point=new THREE.Vector3();raycaster.ray.intersectPlane(dragPlane,point);drag={root,x:e.clientX,z:e.clientY,origX:root.position.x,origZ:root.position.z,offset:root.position.clone().sub(point)};controls.enabled=false;} }
   else if(mode==="select")select(null);
 }
 function onPointerMove(e){
   if(!drag)return;
   if(mode==="rotate"){drag.root.rotation.y+=(e.clientX-drag.x)*.012;drag.x=e.clientX;}
-  else if(mode==="move"){const dx=(e.clientX-drag.x)*.012,dz=(e.clientY-drag.z)*.012;drag.root.position.x=clamp(drag.origX+dx,-width/2+.25,width/2-.25);drag.root.position.z=clamp(drag.origZ+dz,-depth/2+.25,depth/2-.25);}
+  else if(mode==="move"){const rect=canvas.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const point=new THREE.Vector3();if(raycaster.ray.intersectPlane(dragPlane,point)){drag.root.position.x=clamp(point.x+drag.offset.x,-width/2+.25,width/2-.25);drag.root.position.z=clamp(point.z+drag.offset.z,-depth/2+.25,depth/2-.25);}}
   $("posX").value=drag.root.position.x.toFixed(2);$("posZ").value=drag.root.position.z.toFixed(2);
 }
 function onPointerUp(){if(drag){drag=null;controls.enabled=true;}}
@@ -253,7 +264,10 @@ function syncRoom(){
   if(mats.wall){const style=$("roomStyle").value;if(style==="Scandinavian")mats.fabric.color.setHex(0xc0c4b6);else if(style==="Modern luxury")mats.fabric.color.setHex(0x41494b);else if(style==="Industrial")mats.fabric.color.setHex(0x777775);else if(style==="Japandi")mats.fabric.color.setHex(0xa9a18d);else mats.fabric.color.setHex(0x858b78);}
 }
 function generate(){buildRoom();setNotice("Room generated","Procedural layout updated · orbit, select and edit furniture");}
-function setPosition(){if(!selectedRoot)return;selectedRoot.position.x=clamp(Number($("posX").value)||0,-width/2,width/2);selectedRoot.position.z=clamp(Number($("posZ").value)||0,-depth/2,depth/2);}
+function setPosition(){if(!selectedRoot)return;selectedRoot.position.x=clamp(Number($("posX").value)||0,-width/2,width/2);selectedRoot.position.z=clamp(Number($("posZ").value)||0,-depth/2,depth/2);if(selectionHelper)selectionHelper.update();}
+function setScale(value){if(!selectedRoot)return;const s=clamp(Number(value)||1,.25,3);selectedRoot.scale.setScalar(s);$("objectScaleValue").textContent=Math.round(s*100)+"%";if(selectionHelper)selectionHelper.update();}
+function setQuality(next){quality=["balanced","high","ultra"].includes(next)?next:"balanced";const dpr=window.devicePixelRatio||1;const ratio=quality==="ultra"?Math.min(dpr,2):quality==="high"?Math.min(dpr,1.6):Math.min(dpr,1.15);if(renderer){renderer.setPixelRatio(ratio);renderer.shadowMap.enabled=shadowsEnabled;sun.shadow.mapSize.set(quality==="ultra"?4096:quality==="high"?2048:1024);sun.shadow.needsUpdate=true;renderer.setSize(sceneFrame.clientWidth,sceneFrame.clientHeight,false);}if($("renderQuality"))$("renderQuality").value=quality;}
+function export4K(){if(renderInProgress||!renderer||!scene||!camera)return;renderInProgress=true;sceneFrame.classList.add("exporting");const oldQuality=quality,oldAspect=camera.aspect,oldW=sceneFrame.clientWidth,oldH=sceneFrame.clientHeight;const max=renderer.getContext().getParameter(renderer.getContext().MAX_RENDERBUFFER_SIZE);if(max<3840){renderInProgress=false;sceneFrame.classList.remove("exporting");setNotice("4K unavailable","This GPU/browser supports a smaller render target.");notice.style.display="flex";return;}try{setQuality("ultra");renderer.setPixelRatio(1);renderer.setSize(3840,2160,false);camera.aspect=16/9;camera.updateProjectionMatrix();renderer.render(scene,camera);renderer.domElement.toBlob(blob=>{try{if(!blob)throw new Error("Browser could not encode the 4K image");const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="Generator3DROOMS-4K.png";a.click();URL.revokeObjectURL(url);setNotice("4K image exported","3840 × 2160 PNG created by the browser renderer.");notice.style.display="flex";}catch(error){console.error(error);setNotice("4K export failed","Browser could not create the PNG image.");notice.style.display="flex";}finally{camera.aspect=oldAspect;camera.updateProjectionMatrix();setQuality(oldQuality);renderer.setSize(oldW,oldH,false);renderInProgress=false;sceneFrame.classList.remove("exporting");}}, "image/png");}catch(error){console.error("[Generator3DROOMS] 4K export failed",error);camera.aspect=oldAspect;camera.updateProjectionMatrix();setQuality(oldQuality);renderer.setSize(oldW,oldH,false);renderInProgress=false;sceneFrame.classList.remove("exporting");setNotice("4K export failed","This browser or GPU could not allocate a 4K frame.");notice.style.display="flex";}}
 function deleteSelected(){if(!selectedRoot)return;const root=selectedRoot;select(null);root.parent.remove(root);for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.selectableRoot===root)pickables.splice(i,1);}
 function rotateSelected(deg=15){if(selectedRoot)selectedRoot.rotation.y+=Number(deg)*Math.PI/180;}
 function toggleGrid(){gridVisible=!gridVisible;if(gridHelper)gridHelper.visible=gridVisible;return gridVisible;}
@@ -262,7 +276,7 @@ function resetCamera(){if(!camera||!controls)return;camera.position.set(width*.9
 export const api={
   load:()=>{if(!renderer)init();return Promise.resolve(true);},
   get isReady(){return !!renderer;},
-  addObject:addCatalogObject,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,toggleGrid,zoomBy,resetCamera,
+  addObject:addCatalogObject,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,setScale,setQuality,export4K,toggleGrid,zoomBy,resetCamera,
   get selected(){return selectedRoot;}
 };
 init();
