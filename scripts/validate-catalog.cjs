@@ -31,4 +31,8 @@ assert.match(source, /const sizes = \["Compact","Standard","Wide","Premium"\]/);
 assert.match(source, /const PAGE_SIZE = 48/);
 assert.match(html, /id="loadMoreObjects"/);
 assert.match(html, /option>Bathroom</);
+assert.match(html, /id="catalogRoomFilter"/);
+assert.match(source, /https:\/\/api\.polyhaven\.com\/assets\?type=models/);
+assert.match(source, /Number\(value\) >= 4096/);
+assert.match(source, /Free 3D/);
 console.log("Catalog validation passed: 1,000 procedural variants across 6 categories.");
