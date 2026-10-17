@@ -37,3 +37,14 @@
 .object-card:nth-child(3n + 1){animation-delay:45ms}
 @keyframes fade-up{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.object-card,.catalog-more{animation:none}}
+
+
+/* Render controls retain the studio's existing liquid-glass visual language. */
+.quality-select{height:29px;max-width:100px;background:#171b15df;color:#cbd2c3;border:1px solid var(--border);border-radius:7px;padding:0 5px;font-size:9px;outline-offset:2px}
+.export-4k-button{width:38px;font-size:10px;font-weight:800;letter-spacing:-.4px;color:var(--accent);border-color:#d8f8794a;background:#d8f8790c}
+.export-4k-button:hover{background:#d8f8791c;box-shadow:0 0 18px #d8f87916}
+.scene-frame.exporting:after{background:radial-gradient(ellipse at 50% 50%,transparent 30%,#0a0c08a8 100%);animation:export-pulse .7s ease-in-out infinite alternate}
+@keyframes export-pulse{from{opacity:.35}to{opacity:.8}}
+.object-scale-heading{margin-top:16px!important}
+.stage-tools{flex-wrap:wrap}
+@media(max-width:760px){.quality-select{max-width:88px}.export-4k-button{width:34px}}
