@@ -2,6 +2,7 @@ import * as THREE from "https://esm.sh/three@0.165.0";
 import { OrbitControls } from "https://esm.sh/three@0.165.0/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "https://esm.sh/three@0.165.0/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "https://esm.sh/three@0.165.0/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { GLTFLoader } from "https://esm.sh/three@0.165.0/examples/jsm/loaders/GLTFLoader.js";
 
 const $ = id => document.getElementById(id);
 const sceneFrame = $("sceneFrame");
@@ -215,6 +216,49 @@ function addCatalogObject(name){
   else g=makeCabinet(x,z,name);
   g.name=name;select(g);return g;
 }
+async function addAsset(asset) {
+  if(!asset||typeof asset.modelUrl!=="string"||!/^https:\/\//i.test(asset.modelUrl)){setNotice("Model unavailable","The selected asset does not have a valid secure GLB URL.");notice.style.display="flex";return null;}
+  setNotice("Loading free 3D model",asset.name+" · downloading CC0 GLB…");notice.style.display="flex";
+  const loader=new GLTFLoader();
+  return new Promise(resolve=>{
+    loader.load(asset.modelUrl,gltf=>{
+      try{
+        const root=new THREE.Group();root.name=String(asset.name||"Free 3D model").slice(0,120);
+        root.position.set((Math.random()-.5)*width*.45,0,(Math.random()-.5)*depth*.45);
+        const model=gltf.scene;root.add(model);furnitureRoot.add(root);root.updateMatrixWorld(true);
+        let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+        const maxDim=Math.max(size.x,size.y,size.z);
+        if(maxDim>0){
+          const factor=maxDim>4?3/maxDim:maxDim<.35?1.1/maxDim:1;
+          model.scale.multiplyScalar(factor);root.updateMatrixWorld(true);
+          bounds.setFromObject(model);
+          const center=bounds.getCenter(new THREE.Vector3());
+          model.position.x-=center.x-root.position.x;
+          model.position.y-=bounds.min.y;
+          model.position.z-=center.z-root.position.z;
+          root.updateMatrixWorld(true);
+        }
+        root.userData.assetSource=String(asset.source||"CC0 asset library");
+        root.userData.assetLicense="CC0";
+        registerFurniture(root);select(root);
+        setNotice("Free model added",root.name+" · CC0 · loaded with its original materials.");
+        notice.style.display="flex";
+        $("generateStatus").textContent=root.name+" loaded. Select, move, rotate or scale it in the room.";
+        resolve(root);
+      }catch(error){
+        console.error("[Generator3DROOMS] Could not place CC0 model",error);
+        rootCleanup(gltf.scene);
+        setNotice("Model placement failed","The GLB loaded, but its geometry could not be placed in the room.");
+        notice.style.display="flex";resolve(null);
+      }
+    },undefined,error=>{
+      console.error("[Generator3DROOMS] GLB download failed",error);
+      setNotice("Could not load model","The free GLB host may be unavailable or block this request. Try another model.");
+      notice.style.display="flex";resolve(null);
+    });
+  });
+}
+function rootCleanup(object){object.traverse(child=>{if(child.geometry)child.geometry.dispose();});}
 function setMode(next){mode=next;canvas.style.cursor=next==="move"?"move":next==="rotate"?"ew-resize":"grab";}
 function init(){
   try{
@@ -279,7 +323,7 @@ function resetCamera(){if(!camera||!controls)return;camera.position.set(width*.9
 export const api={
   load:()=>{if(!renderer)init();return Promise.resolve(true);},
   get isReady(){return !!renderer;},
-  addObject:addCatalogObject,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,setScale,setQuality,export4K,toggleGrid,zoomBy,resetCamera,
+  addObject:addCatalogObject,addAsset,generate,syncRoom,setMode,deleteSelected,rotateSelected,setPosition,setScale,setQuality,export4K,toggleGrid,zoomBy,resetCamera,
   get selected(){return selectedRoot;}
 };
 init();
