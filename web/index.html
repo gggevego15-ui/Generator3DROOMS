@@ -47,8 +47,8 @@
           <div class="object-grid" id="objectGrid"></div><button class="button button-outline catalog-more" id="loadMoreObjects" type="button">Load more objects</button>
           <p class="catalog-note">1,000 procedural object variations across furniture, lighting, decor, plants, architecture and appliances. These are generated placeholders, not licensed photorealistic model files.</p>
         </section>
-        <section id="layersPanel" class="hidden secondary-panel"><h2>Scene layers</h2><p class="muted">Objects added to the scene will appear here when the Unity WebGL player is connected.</p></section>
-        <section id="roomPanel" class="hidden secondary-panel"><h2>Room dimensions</h2><p class="muted">Set room dimensions in the inspector or in the Unity scene settings.</p></section>
+        <section id="layersPanel" class="hidden secondary-panel"><h2>Scene layers</h2><p class="muted">Select, duplicate, move, rotate, scale and delete objects in the live WebGL scene.</p></section>
+        <section id="roomPanel" class="hidden secondary-panel"><h2>Room dimensions</h2><p class="muted">Set dimensions in the inspector and see the live room update immediately.</p></section>
       </aside>
 
       <section class="center-stage">
@@ -58,7 +58,7 @@
         </div>
         <div class="scene-frame" id="sceneFrame">
           <div class="scene-background"></div>
-          <div class="scene-meta"><span class="live-pill"><span></span> EDITOR PREVIEW</span><span class="scene-dimensions">5.0 m × 4.0 m × 2.8 m</span></div>
+          <div class="scene-meta"><span class="live-pill"><span></span> EDITOR PREVIEW</span><span class="scene-dimensions" id="sceneDimensions">5.0 m × 4.0 m × 2.8 m</span></div>
           <canvas id="unity-canvas" class="unity-canvas" tabindex="-1" aria-label="Interactive real-time WebGL 3D room scene"></canvas>
           <div class="room-preview" id="roomPreview" aria-label="Illustrative room preview">
             <div class="room-wall wall-back"></div><div class="room-wall wall-left"></div><div class="room-floor"></div>
@@ -69,7 +69,7 @@
             <div class="plant"><div class="plant-leaves"></div><div class="plant-pot"></div></div>
             <div class="floor-shadow"></div>
           </div>
-          <div class="preview-caption"><span class="caption-icon">✦</span><div><strong>Living room · Warm minimal</strong><small>Real-time Three.js WebGL · procedural interior</small></div></div>
+          <div class="preview-caption"><span class="caption-icon">✦</span><div><strong id="sceneCaption">Living room · Warm minimal</strong><small>Real-time Three.js WebGL · procedural interior</small></div></div>
           <div class="viewport-controls"><button id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel">100%</span><button id="zoomIn" aria-label="Zoom in">+</button><span class="control-separator"></span><button id="resetView" aria-label="Reset view">⤢</button></div>
           <div class="unity-notice" id="unityNotice"><span class="notice-icon">◈</span><div><strong>Starting real-time 3D scene…</strong><small>Loading the browser WebGL renderer.</small></div></div>
         </div>
