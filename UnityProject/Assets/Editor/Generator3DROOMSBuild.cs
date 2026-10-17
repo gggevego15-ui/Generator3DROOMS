@@ -29,8 +29,9 @@ public static class Generator3DROOMSBuild
                 throw new InvalidOperationException("Could not switch Unity's active build target to WebGL. Install WebGL Build Support in the Unity Editor.");
         }
 
-        string outputPath = Path.GetFullPath(Path.Combine(Application.dataPath, "../../web/Build"));
-        Directory.CreateDirectory(outputPath);
+        string webRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "../../web"));
+        Directory.CreateDirectory(webRoot);
+        string outputPath = Path.Combine(webRoot, "Generator3DROOMS.html");
 
         var options = new BuildPlayerOptions
         {
@@ -45,11 +46,11 @@ public static class Generator3DROOMSBuild
         if (report.summary.result != BuildResult.Succeeded)
             throw new InvalidOperationException("Generator3DROOMS WebGL build failed: " + report.summary.result + ", errors=" + report.summary.totalErrors);
 
-        string loaderPath = Path.Combine(outputPath, "Build.loader.js");
+        string loaderPath = Path.Combine(webRoot, "Build", "Build.loader.js");
         if (!File.Exists(loaderPath))
             throw new FileNotFoundException("Unity reported a successful build but Build.loader.js was not found at the expected path.", loaderPath);
 
-        Debug.Log("[Generator3DROOMS] WebGL build verified: " + loaderPath + " (" + report.summary.totalSize + " bytes).");
+        Debug.Log("[Generator3DROOMS] WebGL build verified: " + loaderPath + " (" + report.summary.totalSize + " bytes). UI index.html was preserved; Unity player HTML is " + outputPath);
     }
 }
 #endif
