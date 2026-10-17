@@ -31,6 +31,8 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
     private Material woodMaterial;
     private Material fabricMaterial;
     private Material accentMaterial;
+    private Material graphiteMaterial;
+    private Material sageMaterial;
     private RoomSettings settings = new RoomSettings();
     private Transform selectedFurniture;
     private Transform lastCreatedFurniture;
@@ -198,6 +200,8 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         woodMaterial = MakeMaterial(new Color(0.42f, 0.29f, 0.18f), 0.18f, 0.0f);
         fabricMaterial = MakeMaterial(new Color(0.47f, 0.51f, 0.42f), 0.0f, 0.0f);
         accentMaterial = MakeMaterial(new Color(0.69f, 0.62f, 0.49f), 0.08f, 0.0f);
+        graphiteMaterial = MakeMaterial(new Color(0.19f, 0.21f, 0.20f), 0.16f, 0.22f);
+        sageMaterial = MakeMaterial(new Color(0.48f, 0.55f, 0.43f), 0.0f, 0.04f);
     }
 
     private Material MakeMaterial(Color color, float metallic, float smoothness)
@@ -426,16 +430,27 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         float scale = lower.Contains("compact") ? 0.82f : lower.Contains("wide") ? 1.18f : lower.Contains("premium") ? 1.08f : 1f;
         root.localScale = new Vector3(scale, scale, scale);
 
-        // Single-mesh objects can take a finish directly. Composite pieces keep their
-        // intentionally mixed materials (fabric, wood, trim) while still changing size.
         Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
-        if (renderers.Length != 1) return;
-        Material finish = null;
-        if (lower.Contains("natural oak")) finish = woodMaterial;
-        else if (lower.Contains("warm walnut")) finish = accentMaterial;
-        else if (lower.Contains("matte white")) finish = wallMaterial;
-        else if (lower.Contains("soft sage")) finish = fabricMaterial;
-        if (finish != null) renderers[0].sharedMaterial = finish;
+        if (renderers.Length == 0) return;
+        if (lower.Contains("graphite"))
+        {
+            foreach (Renderer renderer in renderers) renderer.sharedMaterial = graphiteMaterial;
+            return;
+        }
+        if (lower.Contains("matte white"))
+        {
+            foreach (Renderer renderer in renderers) renderer.sharedMaterial = wallMaterial;
+            return;
+        }
+        foreach (Renderer renderer in renderers)
+        {
+            if (lower.Contains("natural oak") && (renderer.sharedMaterial == woodMaterial || renderer.sharedMaterial == accentMaterial))
+                renderer.sharedMaterial = woodMaterial;
+            else if (lower.Contains("warm walnut") && (renderer.sharedMaterial == woodMaterial || renderer.sharedMaterial == accentMaterial))
+                renderer.sharedMaterial = accentMaterial;
+            else if (lower.Contains("soft sage") && renderer.sharedMaterial == fabricMaterial)
+                renderer.sharedMaterial = sageMaterial;
+        }
     }
 
     private void MakeSofa(Vector3 position, string objectName)
