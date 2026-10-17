@@ -147,7 +147,7 @@
       const furniturePattern = /furniture|sofa|couch|chair|table|bed|cabinet|shelf|desk|lamp|lighting|rug|plant|stool|wardrobe|ottoman|nightstand|dresser|decor|interior|vase|pottery|ceramic|bowl|sculpture|statue|artwork|painting|picture|frame|mirror|clock|book|basket|candle|pillow|cushion|blanket|curtain|textile|planter|flower|flowerpot|sideboard|bench|console|sconce|chandelier|pendant|kitchen|bathroom|bath|sink|tap|faucet|toilet|shower|towel|appliance|dining|storage|ornament|figurine|container|armchair|bookshelf/i;
       freeModels = entries.filter(([id,item]) => {
         const resolution = Array.isArray(item?.max_resolution) ? item.max_resolution : [];
-        const is4K = resolution.some(value => Number(value) >= 4096);
+        const is4K = resolution.length >= 2 && resolution.every(value => Number(value) >= 4096);
         const text = [id,item?.name,item?.description,item?.category,...(item?.categories||[]),...(item?.tags||[])].join(" ");
         return item && is4K && furniturePattern.test(text);
       }).map(([id,item]) => {
