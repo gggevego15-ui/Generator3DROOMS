@@ -79,7 +79,11 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
                 {
                     SelectFurniture(candidate);
                     draggingFurniture = editMode == "move" || editMode == "rotate";
-                    dragOffset = candidate.position - hit.point;
+                    if (floorPlane.Raycast(ray, out float dragEnter))
+                        dragOffset = candidate.position - ray.GetPoint(dragEnter);
+                    else
+                        dragOffset = Vector3.zero;
+                    dragOffset.y = 0f;
                     lastPointerX = Input.mousePosition.x;
                 }
                 else
