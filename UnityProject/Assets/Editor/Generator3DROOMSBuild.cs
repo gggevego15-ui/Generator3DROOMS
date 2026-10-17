@@ -10,6 +10,7 @@ using UnityEngine;
 /// </summary>
 public static class Generator3DROOMSBuild
 {
+    [MenuItem("Generator3DROOMS/Build WebGL")]
     public static void BuildWebGL()
     {
         const string scenePath = "Assets/Scenes/Generator3DROOMS.unity";
