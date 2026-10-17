@@ -31,6 +31,7 @@ jobs:
           test -s web/unity-bridge.js
           node --check web/app.js
           node --check web/unity-bridge.js
+          node scripts/validate-catalog.cjs
       - name: Validate Unity integration entry points
         run: |
           test -s UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
@@ -39,6 +40,9 @@ jobs:
           grep -q 'public void SetEditMode' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           grep -q 'public void SetSelectedPosition' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           grep -q 'public void DeleteSelectedObject' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
+          grep -q 'private void BeginComposite' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
+          grep -q 'private void ApplyCatalogVariant' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
+          grep -q 'private void MakeBathtub' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
           grep -q 'Generator3DROOMS_OnSelection' UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
       - name: Report scope
         run: echo "Static checks passed. Unity compilation and WebGL build require Unity Editor and are not tested by this workflow."
