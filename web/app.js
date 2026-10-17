@@ -48,6 +48,8 @@
   let activeCategory = "All";
   let freeModels = [];
   let freeModelsStatus = "loading";
+  let freeModelsTotal = 0;
+  let catalogRoomFilter = "All rooms";
   let selected = null;
   let zoom = 100;
   let shadows = true;
@@ -87,7 +89,24 @@
   function renderCatalog() {
     const query = $("searchInput").value.trim().toLowerCase();
     const source = activeCategory === "Free 3D" ? freeModels : categories;
-    const filtered = source.filter(item => (activeCategory === "All" || activeCategory === "Free 3D" || item.category === activeCategory) && (item.name + " " + (item.tags || []).join(" ")).toLowerCase().includes(query));
+    const roomTerms = {
+      "Living room": /sofa|couch|armchair|chair|coffee table|side table|tv|television|lamp|rug|vase|plant|shelf|book|mirror|sculpture|artwork|decor|cabinet|sideboard|ottoman|curtain|pillow|cushion|clock|stool|bench/i,
+      "Bedroom": /bed|mattress|nightstand|bedside|wardrobe|dresser|closet|lamp|rug|mirror|pillow|cushion|blanket|curtain|bench|chest|cabinet/i,
+      "Home office": /desk|office chair|chair|bookcase|shelf|monitor|computer|laptop|keyboard|lamp|cabinet|drawer|filing|clock|plant/i,
+      "Kitchen": /kitchen|dining|stool|chair|table|cabinet|cupboard|shelf|fridge|refrigerator|oven|microwave|sink|tap|faucet|toaster|kettle|pot|pan|bowl|plate|mug|bottle|container|counter/i,
+      "Dining room": /dining|table|chair|sideboard|cabinet|buffet|vase|lamp|pendant|chandelier|rug|artwork|mirror|bench/i,
+      "Bathroom": /bath|shower|toilet|sink|faucet|tap|vanity|towel|mirror|cabinet|shelf|soap|basket|laundry/i,
+      "Kids room": /kid|child|toy|teddy|crib|bunk|bed|chair|desk|shelf|storage|book|lamp|rug|basket/i,
+      "Entryway": /entry|hall|coat|shoe|bench|console|mirror|umbrella|hanger|wardrobe|cabinet|basket|lamp/i,
+      "Laundry room": /laundry|washing machine|washer|dryer|basket|shelf|cabinet|iron|ironing|detergent|sink/i
+    };
+    const filtered = source.filter(item => {
+      const text = (item.name + " " + (item.tags || []).join(" ") + " " + (item.categories || []).join(" ") + " " + (item.description || "")).toLowerCase();
+      const categoryMatch = activeCategory === "All" || activeCategory === "Free 3D" || item.category === activeCategory;
+      const queryMatch = text.includes(query);
+      const roomMatch = catalogRoomFilter === "All rooms" || (roomTerms[catalogRoomFilter]?.test(text) ?? true);
+      return categoryMatch && queryMatch && roomMatch;
+    });
     const visible = filtered.slice(0, visibleCount);
     $("objectGrid").innerHTML = visible.map(item => {
       const thumb = item.isExternal && item.thumb
@@ -100,9 +119,10 @@
         <span class="object-meta"><span>${escapeHtml(meta)}</span><span class="free">${item.isExternal ? "Free" : item.price}</span></span>
       </button>`;
     }).join("");
-    if (activeCategory === "Free 3D" && freeModelsStatus === "loading") $("resultCount").textContent = "Loading free CC0 furniture models…";
+    if (activeCategory === "Free 3D" && freeModelsStatus === "loading") $("resultCount").textContent = "Finding free CC0 models with verified 4K texture resolution…";
     else if (activeCategory === "Free 3D" && freeModelsStatus === "error") $("resultCount").textContent = "Model library unavailable — check your internet connection";
-    else if (activeCategory === "Free 3D") $("resultCount").textContent = `${filtered.length} free CC0 GLB models · select one to add it to the room`;
+    else if (activeCategory === "Free 3D") $("resultCount").textContent = `${filtered.length} verified 4K CC0 models shown · ${freeModelsTotal} available in the source`;
+    else if (activeCategory === "All" && catalogRoomFilter !== "All rooms") $("resultCount").textContent = `${filtered.length.toLocaleString()} procedural objects matching ${catalogRoomFilter.toLowerCase()} · showing ${visible.length.toLocaleString()}`;
     else $("resultCount").textContent = `${filtered.length.toLocaleString()} procedural objects · showing ${visible.length.toLocaleString()}`;
     const moreButton = $("loadMoreObjects");
     moreButton.hidden = visible.length >= filtered.length;
@@ -119,36 +139,48 @@
   }
   async function loadFreeModels() {
     try {
-      const response = await fetch("https://three.ws/api/objects/library?limit=500", {headers:{"Accept":"application/json"}});
-      if (!response.ok) throw new Error("Model library returned HTTP " + response.status);
+      const response = await fetch("https://api.polyhaven.com/assets?type=models", {headers:{"Accept":"application/json"}});
+      if (!response.ok) throw new Error("Poly Haven API returned HTTP " + response.status);
       const payload = await response.json();
-      const entries = Array.isArray(payload.objects) ? payload.objects : Array.isArray(payload.assets) ? payload.assets : Array.isArray(payload.results) ? payload.results : Array.isArray(payload) ? payload : [];
-      const furniturePattern = /furniture|sofa|couch|chair|table|bed|cabinet|shelf|desk|lamp|lighting|rug|plant|stool|wardrobe|ottoman|nightstand|dresser|decor|interior|vase|pottery|ceramic|bowl|sculpture|statue|artwork|painting|picture|frame|mirror|clock|book|basket|candle|pillow|cushion|blanket|curtain|curtains|textile|planter|flower|flowerpot|sideboard|bench|console|ottoman|sconce|chandelier|pendant|stool|kitchen|bathroom|bath|sink|tap|faucet|toilet|shower|towel|appliance/i;
-      freeModels = entries.filter(item => item && typeof item.url === "string" && /^https:\/\//i.test(item.url) && String(item.license).toUpperCase() === "CC0" && furniturePattern.test([item.label,item.name,...(item.categories||[]),...(item.tags||[])].join(" ")))
-        .map(item => {
-          const label = String(item.label || item.name || "Free 3D model").slice(0,120);
-          const rawCategory = [...(item.categories || []), ...(item.tags || [])].join(" ").toLowerCase();
-          const searchText = rawCategory + " " + label.toLowerCase();
-          let kind = "cabinet";
-          if (/sofa|couch|chair|seating|stool/.test(searchText)) kind = "sofa";
-          else if (/table|desk/.test(searchText)) kind = "table";
-          else if (/lamp|light/.test(searchText)) kind = "lamp";
-          else if (/plant|tree/.test(searchText)) kind = "plant";
-          else if (/bed/.test(searchText)) kind = "bed";
-          else if (/rug|carpet|curtain|blanket|pillow|cushion|textile/.test(searchText)) kind = "rug";
-          else if (/vase|pottery|ceramic|bowl|sculpture|statue|artwork|painting|picture|frame|mirror|clock|book|basket|candle|decor|flowerpot|planter/.test(searchText)) kind = "decor";
-          return {id:"cc0-"+String(item.name || label),name:label,category:"Free 3D",price:"Free",kind,isExternal:true,modelUrl:item.url,thumb:typeof item.thumb==="string"&&/^https:\/\//i.test(item.thumb)?item.thumb:"",license:"CC0",source:item.source||"Poly Haven",tags:[...(item.categories||[]),...(item.tags||[])]};
-        });
+      const entries = Object.entries(payload || {});
+      freeModelsTotal = entries.length;
+      const furniturePattern = /furniture|sofa|couch|chair|table|bed|cabinet|shelf|desk|lamp|lighting|rug|plant|stool|wardrobe|ottoman|nightstand|dresser|decor|interior|vase|pottery|ceramic|bowl|sculpture|statue|artwork|painting|picture|frame|mirror|clock|book|basket|candle|pillow|cushion|blanket|curtain|textile|planter|flower|flowerpot|sideboard|bench|console|sconce|chandelier|pendant|kitchen|bathroom|bath|sink|tap|faucet|toilet|shower|towel|appliance|dining|storage|ornament|figurine|container|armchair|bookshelf/i;
+      freeModels = entries.filter(([id,item]) => {
+        const resolution = Array.isArray(item?.max_resolution) ? item.max_resolution : [];
+        const is4K = resolution.some(value => Number(value) >= 4096);
+        const text = [id,item?.name,item?.description,item?.category,...(item?.categories||[]),...(item?.tags||[])].join(" ");
+        return item && is4K && furniturePattern.test(text);
+      }).map(([id,item]) => {
+        const label = String(item.name || id).slice(0,120);
+        const rawCategory = [item.category,...(item.categories||[]),...(item.tags||[])].filter(Boolean).join(" ").toLowerCase();
+        const searchText = rawCategory + " " + label.toLowerCase();
+        let kind = "cabinet";
+        if (/sofa|couch|chair|seating|stool|bench/.test(searchText)) kind = "sofa";
+        else if (/table|desk/.test(searchText)) kind = "table";
+        else if (/lamp|light|chandelier|sconce/.test(searchText)) kind = "lamp";
+        else if (/plant|tree|flower/.test(searchText)) kind = "plant";
+        else if (/bed|mattress/.test(searchText)) kind = "bed";
+        else if (/rug|carpet|curtain|blanket|pillow|cushion|textile/.test(searchText)) kind = "rug";
+        else if (/vase|pottery|ceramic|bowl|sculpture|statue|artwork|painting|picture|frame|mirror|clock|book|basket|candle|decor|flowerpot|planter|figurine/.test(searchText)) kind = "decor";
+        return {
+          id:"polyhaven-"+id,name:label,category:"Free 3D",price:"Free",kind,isExternal:true,
+          modelId:id,modelUrl:"",thumb:typeof item.thumbnail_url==="string"&&/^https:\/\//i.test(item.thumbnail_url)?item.thumbnail_url:"",
+          license:"CC0",source:"Poly Haven",maxResolution:Math.max(...(item.max_resolution||[]).map(Number)),
+          tags:[...(item.categories||[]),...(item.tags||[]),item.category||""],description:item.description||""
+        };
+      });
       freeModelsStatus = "ready";
       const count = $("freeModelCount"); if (count) count.textContent = String(freeModels.length);
     } catch (error) {
-      console.warn("[Generator3DROOMS] Free CC0 model library unavailable", error);
+      console.warn("[Generator3DROOMS] Poly Haven 4K model library unavailable", error);
       freeModelsStatus = "error";
       const count = $("freeModelCount"); if (count) count.textContent = "Retry";
     }
     if (activeCategory === "Free 3D") renderCatalog();
   }
   $("searchInput").addEventListener("input", () => { visibleCount = PAGE_SIZE; renderCatalog(); });
+  $("catalogRoomFilter").addEventListener("change", () => { catalogRoomFilter = $("catalogRoomFilter").value; visibleCount = PAGE_SIZE; renderCatalog(); });
+  $("roomType").addEventListener("change", () => { const select = $("catalogRoomFilter"); if (select && [...select.options].some(option => option.value === $("roomType").value)) { select.value = $("roomType").value; catalogRoomFilter = select.value; renderCatalog(); } });
   $("loadMoreObjects").addEventListener("click", () => { visibleCount += PAGE_SIZE; renderCatalog(); });
   document.querySelectorAll("[data-category]").forEach(button => button.addEventListener("click", () => {
     activeCategory = button.dataset.category;
