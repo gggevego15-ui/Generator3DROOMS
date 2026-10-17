@@ -122,8 +122,8 @@
       const response = await fetch("https://three.ws/api/objects/library?limit=500", {headers:{"Accept":"application/json"}});
       if (!response.ok) throw new Error("Model library returned HTTP " + response.status);
       const payload = await response.json();
-      const entries = Array.isArray(payload.objects) ? payload.objects : [];
-      const furniturePattern = /furniture|sofa|couch|chair|table|bed|cabinet|shelf|desk|lamp|lighting|rug|plant|stool|wardrobe|ottoman|nightstand|dresser|decor|interior/i;
+      const entries = Array.isArray(payload.objects) ? payload.objects : Array.isArray(payload.assets) ? payload.assets : Array.isArray(payload.results) ? payload.results : Array.isArray(payload) ? payload : [];
+      const furniturePattern = /furniture|sofa|couch|chair|table|bed|cabinet|shelf|desk|lamp|lighting|rug|plant|stool|wardrobe|ottoman|nightstand|dresser|decor|interior|vase|pottery|ceramic|bowl|sculpture|statue|artwork|painting|picture|frame|mirror|clock|book|basket|candle|pillow|cushion|blanket|curtain|curtains|textile|planter|flower|flowerpot|sideboard|bench|console|ottoman|sconce|chandelier|pendant|stool|kitchen|bathroom|bath|sink|tap|faucet|toilet|shower|towel|appliance/i;
       freeModels = entries.filter(item => item && typeof item.url === "string" && /^https:\/\//i.test(item.url) && String(item.license).toUpperCase() === "CC0" && furniturePattern.test([item.label,item.name,...(item.categories||[]),...(item.tags||[])].join(" ")))
         .map(item => {
           const label = String(item.label || item.name || "Free 3D model").slice(0,120);
@@ -135,7 +135,8 @@
           else if (/lamp|light/.test(searchText)) kind = "lamp";
           else if (/plant|tree/.test(searchText)) kind = "plant";
           else if (/bed/.test(searchText)) kind = "bed";
-          else if (/rug|carpet/.test(searchText)) kind = "rug";
+          else if (/rug|carpet|curtain|blanket|pillow|cushion|textile/.test(searchText)) kind = "rug";
+          else if (/vase|pottery|ceramic|bowl|sculpture|statue|artwork|painting|picture|frame|mirror|clock|book|basket|candle|decor|flowerpot|planter/.test(searchText)) kind = "decor";
           return {id:"cc0-"+String(item.name || label),name:label,category:"Free 3D",price:"Free",kind,isExternal:true,modelUrl:item.url,thumb:typeof item.thumb==="string"&&/^https:\/\//i.test(item.thumb)?item.thumb:"",license:"CC0",source:item.source||"Poly Haven",tags:[...(item.categories||[]),...(item.tags||[])]};
         });
       freeModelsStatus = "ready";
