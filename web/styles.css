@@ -29,3 +29,11 @@
 .unity-canvas{cursor:crosshair;touch-action:none}
 .scene-frame.unity-ready .scene-meta{pointer-events:none}
 @media(prefers-reduced-motion:reduce){.unity-canvas{scroll-behavior:auto}}
+
+.catalog-more{width:100%;margin:12px 0 6px;animation:fade-up .28s ease both}
+.catalog-more[hidden]{display:none}
+.object-card{animation:fade-up .24s ease both}
+.object-card:nth-child(3n){animation-delay:25ms}
+.object-card:nth-child(3n + 1){animation-delay:45ms}
+@keyframes fade-up{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.object-card,.catalog-more{animation:none}}
