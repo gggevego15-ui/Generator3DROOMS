@@ -30,27 +30,51 @@ public static class Generator3DROOMSBuild
         }
 
         string webRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "../../web"));
+        string tempRoot = Path.Combine(webRoot, ".unity-temp");
+        string tempBuildRoot = Path.Combine(tempRoot, "Build");
         Directory.CreateDirectory(webRoot);
-        string outputPath = Path.Combine(webRoot, "Generator3DROOMS.html");
+        if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
+        Directory.CreateDirectory(tempRoot);
 
         var options = new BuildPlayerOptions
         {
             scenes = new[] { scenePath },
-            locationPathName = outputPath,
+            locationPathName = tempBuildRoot,
             target = BuildTarget.WebGL,
             options = BuildOptions.None
         };
 
-        Debug.Log("[Generator3DROOMS] Starting WebGL build to " + outputPath);
+        Debug.Log("[Generator3DROOMS] Starting WebGL build to " + tempBuildRoot);
         BuildReport report = BuildPipeline.BuildPlayer(options);
         if (report.summary.result != BuildResult.Succeeded)
             throw new InvalidOperationException("Generator3DROOMS WebGL build failed: " + report.summary.result + ", errors=" + report.summary.totalErrors);
 
-        string loaderPath = Path.Combine(webRoot, "Build", "Build.loader.js");
-        if (!File.Exists(loaderPath))
-            throw new FileNotFoundException("Unity reported a successful build but Build.loader.js was not found at the expected path.", loaderPath);
+        string generatedAssets = Path.Combine(tempBuildRoot, "Build");
+        string generatedLoader = Path.Combine(generatedAssets, "Build.loader.js");
+        if (!File.Exists(generatedLoader))
+            throw new FileNotFoundException("Unity reported a successful build but Build.loader.js was not found in the generated output.", generatedLoader);
 
-        Debug.Log("[Generator3DROOMS] WebGL build verified: " + loaderPath + " (" + report.summary.totalSize + " bytes). UI index.html was preserved; Unity player HTML is " + outputPath);
+        string finalAssets = Path.Combine(webRoot, "Build");
+        if (Directory.Exists(finalAssets)) Directory.Delete(finalAssets, true);
+        Directory.Move(generatedAssets, finalAssets);
+
+        string templateSource = Path.Combine(tempBuildRoot, "TemplateData");
+        string templateDestination = Path.Combine(webRoot, "TemplateData");
+        if (Directory.Exists(templateSource))
+        {
+            if (Directory.Exists(templateDestination)) Directory.Delete(templateDestination, true);
+            Directory.Move(templateSource, templateDestination);
+        }
+
+        string generatedHtml = Path.Combine(tempBuildRoot, "index.html");
+        if (!File.Exists(generatedHtml))
+            throw new FileNotFoundException("Unity WebGL output is missing index.html.", generatedHtml);
+        string finalHtml = Path.Combine(webRoot, "Generator3DROOMS.html");
+        File.Copy(generatedHtml, finalHtml, true);
+        Directory.Delete(tempRoot, true);
+
+        string loaderPath = Path.Combine(finalAssets, "Build.loader.js");
+        Debug.Log("[Generator3DROOMS] WebGL build verified: " + loaderPath + " (" + report.summary.totalSize + " bytes). Existing web/index.html was preserved; standalone player: " + finalHtml);
     }
 }
 #endif
