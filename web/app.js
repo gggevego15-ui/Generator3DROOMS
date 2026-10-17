@@ -158,9 +158,9 @@
       showToast(`${selected.name} added to the 3D scene`);
     } else {
       window.Generator3DROOMSUnity?.load();
-      showToast("Unity WebGL build is required to place objects in 3D");
+      showToast("Starting the real-time WebGL scene — try adding the object again in a moment");
     }
-    $("generateStatus").textContent = `${selected.name} selected. Add it to the scene when Unity WebGL is connected.`;
+    $("generateStatus").textContent = `${selected.name} selected. Add it to the real-time 3D scene.`;
   });
   function saveHistory() {
     history.push({w:$("roomWidth").value,d:$("roomDepth").value,h:$("roomHeight").value,style:$("roomStyle").value});
@@ -187,7 +187,7 @@
     const type=$("roomType").value, density=$("density").value;
     const styles=["Warm minimal","Scandinavian","Modern luxury","Industrial","Japandi"];
     $("roomStyle").value=styles[Math.floor(Math.random()*styles.length)];
-    $("generateStatus").textContent=`Draft layout prepared: ${type.toLowerCase()}, ${density} furnishing. Actual 3D placement requires a Unity WebGL build.`;
+    $("generateStatus").textContent=`Draft layout prepared: ${type.toLowerCase()}, ${density} furnishing. The real-time WebGL scene updates the layout.`;
     $("previewSofa").style.left=(18+Math.floor(Math.random()*10))+"%";
     $("previewSofa").style.top=(42+Math.floor(Math.random()*8))+"%";
     saveHistory(); showToast("Layout concept generated");
