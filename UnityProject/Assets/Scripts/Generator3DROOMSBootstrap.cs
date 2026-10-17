@@ -317,13 +317,13 @@ public sealed class Generator3DROOMSBootstrap : MonoBehaviour
         }
         else if (room.Contains("bath") || room.Contains("laundry"))
         {
-            MakeBox("Bathtub", new Vector3(0f, 0.28f, settings.depth * 0.28f), new Vector3(1.65f, 0.48f, 0.78f), accentMaterial);
-            MakeBox("Bathroom vanity", new Vector3(-settings.width * 0.25f, 0.42f, settings.depth * 0.25f), new Vector3(0.9f, 0.84f, 0.48f), woodMaterial);
-            MakeBox("Bathroom mirror", new Vector3(-settings.width * 0.25f, 1.55f, settings.depth * 0.48f), new Vector3(0.85f, 0.9f, 0.06f), fabricMaterial);
+            MakeBathtub(new Vector3(0f, 0f, settings.depth * 0.28f), "Bathtub");
+            MakeVanity(new Vector3(-settings.width * 0.25f, 0f, settings.depth * 0.25f), "Bathroom vanity");
+            MakeMirror(new Vector3(-settings.width * 0.25f, 0f, settings.depth * 0.48f), "Bathroom mirror");
             if (room.Contains("laundry"))
                 MakeBox("Washing machine", new Vector3(settings.width * 0.25f, 0.48f, settings.depth * 0.25f), new Vector3(0.65f, 0.96f, 0.62f), wallMaterial);
             else
-                MakeBox("Toilet", new Vector3(settings.width * 0.25f, 0.22f, settings.depth * 0.25f), new Vector3(0.48f, 0.44f, 0.58f), wallMaterial);
+                MakeToilet(new Vector3(settings.width * 0.25f, 0f, settings.depth * 0.25f));
         }
         else if (room.Contains("kitchen"))
         {
