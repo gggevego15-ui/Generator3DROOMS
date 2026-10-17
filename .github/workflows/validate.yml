@@ -1,0 +1,44 @@
+name: Validate Generator3DROOMS workspace
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "UnityProject/**"
+      - ".github/workflows/validate.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "UnityProject/**"
+      - ".github/workflows/validate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate web files
+        run: |
+          test -s web/index.html
+          test -s web/styles.css
+          test -s web/app.js
+          test -s web/unity-bridge.js
+          node --check web/app.js
+          node --check web/unity-bridge.js
+      - name: Validate Unity integration entry points
+        run: |
+          test -s UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
+          test -s UnityProject/Assets/Scripts/RoomGenerator.cs
+          test -s UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
+          grep -q 'public void SetEditMode' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
+          grep -q 'public void SetSelectedPosition' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
+          grep -q 'public void DeleteSelectedObject' UnityProject/Assets/Scripts/Generator3DROOMSBootstrap.cs
+          grep -q 'Generator3DROOMS_OnSelection' UnityProject/Assets/Plugins/WebGL/Generator3DROOMSBridge.jslib
+      - name: Report scope
+        run: echo "Static checks passed. Unity compilation and WebGL build require Unity Editor and are not tested by this workflow."
