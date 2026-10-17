@@ -237,8 +237,9 @@ function init(){
     sceneFrame.classList.add("unity-ready");sceneFrame.classList.remove("unity-loading");
     notice.style.display="none";
     window.addEventListener("resize",resize);
+    window.addEventListener("keydown",e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||""))return;if(e.key==="Delete"||e.key==="Backspace")deleteSelected();else if(e.key==="Escape")select(null);else if(e.key.toLowerCase()==="r")rotateSelected(15);});
     canvas.addEventListener("pointerdown",onPointerDown);window.addEventListener("pointermove",onPointerMove);window.addEventListener("pointerup",onPointerUp);
-    const animate=()=>{requestAnimationFrame(animate);controls.update();if(selectionHelper)selectionHelper.update();renderer.render(scene,camera);};animate();
+    const animate=()=>{requestAnimationFrame(animate);controls.update();if(selectionHelper)selectionHelper.update();if(!renderInProgress)renderer.render(scene,camera);};animate();
     setNotice("Real-time 3D ready","WebGL scene active · no Unity license required");
     window.dispatchEvent(new CustomEvent("generator3drooms:three-ready"));
   }catch(e){console.error("[Generator3DROOMS] Three.js initialization failed",e);setNotice("WebGL unavailable","Try updating the browser or enabling hardware acceleration.");}
@@ -271,7 +272,7 @@ function export4K(){if(renderInProgress||!renderer||!scene||!camera)return;rende
 function deleteSelected(){if(!selectedRoot)return;const root=selectedRoot;select(null);root.parent.remove(root);for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.selectableRoot===root)pickables.splice(i,1);}
 function rotateSelected(deg=15){if(selectedRoot)selectedRoot.rotation.y+=Number(deg)*Math.PI/180;}
 function toggleGrid(){gridVisible=!gridVisible;if(gridHelper)gridHelper.visible=gridVisible;return gridVisible;}
-function zoomBy(factor){if(!camera||!controls)return;const offset=camera.position.clone().sub(controls.target).multiplyScalar(factor);camera.position.copy(controls.target.clone().add(offset));controls.update();}
+function zoomBy(factor){if(!camera||!controls)return;const offset=camera.position.clone().sub(controls.target).multiplyScalar(factor);camera.position.copy(controls.target.clone().add(offset));controls.update();const label=$("zoomLabel");if(label)label.textContent=Math.round(100*5/Math.max(.01,offset.length()))+"%";}
 function resetCamera(){if(!camera||!controls)return;camera.position.set(width*.95,height*1.08,depth*1.55);controls.target.set(0,height*.37,0);controls.update();}
 export const api={
   load:()=>{if(!renderer)init();return Promise.resolve(true);},
