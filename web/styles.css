@@ -21,3 +21,11 @@
 .scene-frame.unity-ready .unity-notice{display:none}
 .scene-frame.unity-loading .unity-notice{border-color:#d8f87955}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+.selection-actions{display:grid;grid-template-columns:1fr auto;gap:8px}
+.delete-object-button{width:100%;margin-top:8px;color:#c9a9a0}
+.tool-button[data-mode="move"],.tool-button[data-mode="rotate"]{font-size:17px}
+.tool-button.active[data-mode]{box-shadow:inset 0 0 0 1px #d8f87955,0 0 16px #d8f8790b}
+.unity-canvas{cursor:crosshair;touch-action:none}
+.scene-frame.unity-ready .scene-meta{pointer-events:none}
+@media(prefers-reduced-motion:reduce){.unity-canvas{scroll-behavior:auto}}
